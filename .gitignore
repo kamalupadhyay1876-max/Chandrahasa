@@ -1,0 +1,9 @@
+node_modules/
+.env
+backend/.env
+backend/data/
+*.db
+*.sqlite
+.DS_Store
+playwright-report/
+test-results/

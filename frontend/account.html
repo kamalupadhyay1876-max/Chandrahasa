@@ -1,0 +1,63 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>My Account — Chandrahasa</title>
+<meta name="robots" content="noindex">
+<link rel="icon" type="image/svg+xml" href="/assets/favicon.svg">
+<link rel="stylesheet" href="/css/style.css">
+</head>
+<body>
+<div data-layout="header"></div>
+
+<main class="container">
+  <div style="padding:26px 0 0">
+    <span class="kicker">The Chandrahasa Circle</span>
+    <h1 class="h-serif" style="font-size:clamp(28px,4vw,40px)">Namaste, <em id="acctName">friend</em>.</h1>
+  </div>
+
+  <div class="account-layout">
+    <nav class="acct-nav" aria-label="Account sections">
+      <button class="acct-tab active" data-tab="orders"><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round"><path d="M6 2h12v20l-3-2-3 2-3-2-3 2z"/><path d="M9 7h6M9 11h6"/></svg>My Orders</button>
+      <button class="acct-tab" data-tab="wishlist"><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round"><path d="M20.8 4.6a5.5 5.5 0 0 0-7.8 0L12 5.7l-1-1.1a5.5 5.5 0 0 0-7.8 7.8l1 1L12 21l7.8-7.6 1-1a5.5 5.5 0 0 0 0-7.8z"/></svg>Wishlist</button>
+      <button class="acct-tab" data-tab="profile"><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="8" r="4"/><path d="M4 21c0-4 3.6-6.5 8-6.5s8 2.5 8 6.5"/></svg>Profile</button>
+      <button class="acct-tab" data-signout style="color:var(--danger)"><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round"><path d="M9 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h4"/><path d="M16 17l5-5-5-5M21 12H9"/></svg>Sign Out</button>
+    </nav>
+
+    <div>
+      <!-- ORDERS -->
+      <section id="tab-orders" class="acct-panel">
+        <div id="ordersList"><div class="skeleton" style="height:140px;border-radius:var(--radius)"></div></div>
+      </section>
+
+      <!-- WISHLIST -->
+      <section id="tab-wishlist" class="acct-panel hidden">
+        <div class="product-grid" id="wishlistGrid" style="grid-template-columns:repeat(3,1fr)"></div>
+      </section>
+
+      <!-- PROFILE -->
+      <section id="tab-profile" class="acct-panel hidden">
+        <form id="profileForm" style="max-width:460px;background:var(--paper);border:1px solid var(--line);border-radius:var(--radius);padding:22px">
+          <h2 style="font-family:var(--font-display);font-size:21px;color:var(--charcoal);margin-bottom:14px">Your details</h2>
+          <div class="field"><label for="pfName">Full name</label><input id="pfName" required></div>
+          <div class="field"><label for="pfPhone">Phone</label><input id="pfPhone" type="tel" inputmode="tel"></div>
+          <div class="field"><label>Email</label><input id="pfEmail" disabled style="background:var(--sand);color:var(--faint)"></div>
+          <button type="submit" class="btn btn-dark btn-sm">Save changes</button>
+        </form>
+      </section>
+    </div>
+  </div>
+</main>
+
+<!-- print-only invoice container -->
+<div id="invoice-print" class="no-print-hidden" style="display:none"></div>
+
+<div data-layout="footer"></div>
+<script src="/js/layout.js"></script>
+
+<script src="/js/store.js"></script>
+<script src="/js/cards.js"></script>
+<script src="/js/account.js"></script>
+</body>
+</html>

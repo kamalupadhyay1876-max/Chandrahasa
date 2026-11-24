@@ -1,0 +1,71 @@
+{
+  "version": 2,
+  "builds": [
+    {
+      "src": "public/**",
+      "use": "@vercel/static"
+    }
+  ],
+  "routes": [
+    {
+      "src": "/shop/?$",
+      "dest": "/public/shop.html"
+    },
+    {
+      "src": "/product/?$",
+      "dest": "/public/product.html"
+    },
+    {
+      "src": "/login/?$",
+      "dest": "/public/login.html"
+    },
+    {
+      "src": "/signup/?$",
+      "dest": "/public/signup.html"
+    },
+    {
+      "src": "/account/?$",
+      "dest": "/public/account.html"
+    },
+    {
+      "src": "/checkout/?$",
+      "dest": "/public/checkout.html"
+    },
+    {
+      "src": "/success/?$",
+      "dest": "/public/success.html"
+    },
+    {
+      "src": "/heritage/?$",
+      "dest": "/public/heritage.html"
+    },
+    {
+      "src": "/contact/?$",
+      "dest": "/public/contact.html"
+    },
+    {
+      "src": "/policies/?$",
+      "dest": "/public/policies.html"
+    },
+    {
+      "src": "/admin/?$",
+      "dest": "/public/admin.html"
+    },
+    {
+      "src": "/admin-operations/?$",
+      "dest": "/public/admin-operations.html"
+    },
+    {
+      "src": "/forgot-password/?$",
+      "dest": "/public/forgot-password.html"
+    },
+    {
+      "src": "/reset-password/?$",
+      "dest": "/public/reset-password.html"
+    },
+    {
+      "src": "/(.*)",
+      "dest": "/public/$1"
+    }
+  ]
+}

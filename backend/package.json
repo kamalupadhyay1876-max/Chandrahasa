@@ -1,0 +1,31 @@
+{
+  "name": "chandrahasa-storefront",
+  "version": "1.0.0",
+  "private": true,
+  "description": "Chandrahasa \u2014 925 Sterling Silver Jewellery e-commerce. Full-stack: Node HTTP server, SQLite database, session auth, Razorpay integration and storefront APIs.",
+  "scripts": {
+    "start": "node server.js",
+    "seed": "node seed.js",
+    "audit": "node scripts/audit.js",
+    "test": "node scripts/audit.js",
+    "e2e": "node scripts/e2e.js",
+    "smoke": "node scripts/shoot.js",
+    "env:check": "node scripts/env-doctor.js",
+    "syntax": "node --check server.js && node --check db.js && node --check seed.js && node --check scripts/env-doctor.js",
+    "docker:build": "docker build -t chandrahasa-store .",
+    "test:browser-smoke": "python tests/browser-smoke.py",
+    "create-admin": "node scripts/create-admin.js",
+    "db:backup": "node scripts/backup.js",
+    "db:restore": "node scripts/restore.js",
+    "test:schema": "python tests/schema-check.py"
+  },
+  "engines": {
+    "node": ">=20"
+  },
+  "dependencies": {
+    "better-sqlite3": "^12.11.1"
+  },
+  "devDependencies": {
+    "playwright-core": "^1.65.1"
+  }
+}

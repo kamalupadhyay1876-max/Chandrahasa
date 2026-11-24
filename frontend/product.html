@@ -1,0 +1,151 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title id="pdpTitle">Product — Chandrahasa 925 Silver</title>
+<meta name="description" content="Explore product photographs, specifications and care information for Chandrahasa sterling silver jewellery.">
+<link rel="icon" type="image/svg+xml" href="/assets/favicon.svg">
+<link rel="stylesheet" href="/css/style.css">
+</head>
+<body>
+<div data-layout="header"></div>
+
+<main class="container">
+  <nav aria-label="Breadcrumb" style="font-size:12px;color:var(--faint);padding:18px 0 0">
+    <a href="/" style="color:inherit;text-decoration:none">Home</a> /
+    <a href="/shop" id="crumbCat" style="color:inherit;text-decoration:none">Shop</a> /
+    <span id="crumbName" style="color:var(--charcoal)">Piece</span>
+  </nav>
+
+  <div class="pdp-grid">
+    <!-- Product photography and details -->
+    <div>
+      <div class="pdp-stage" id="pdpStage">
+        <img id="pdpPhoto" alt="Product photograph" style="display:block;width:100%;aspect-ratio:1/1.02;object-fit:cover">
+        <div class="pdp-stage-badges"><span class="mode-pill" id="pdpBadge">925 SILVER</span></div>
+      </div>
+      <div style="display:flex;justify-content:flex-end;margin-top:12px">
+      </div>
+
+      <div class="huid-card">
+        <svg viewBox="0 0 24 24"><path d="M12 2l8 4v6c0 5-3.5 9.5-8 10-4.5-.5-8-5-8-10V6l8-4z"/><path d="M9 12l2 2 4-4"/></svg>
+        <div>
+          <b>HUID <span id="huidCode">Not provided</span></b>
+          <small>Check the HUID and hallmark details supplied for this individual product. Verify a provided HUID using the BIS Care portal.</small><br>
+          <a href="https://care.bis.gov.in/" target="_blank" rel="noopener noreferrer">Verify on BIS Care ↗</a>
+        </div>
+      </div>
+
+      <div class="accordion" style="margin-top:6px">
+        <div class="acc-item open"><button class="acc-head" aria-expanded="true">The Maker’s Story<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><path d="M12 5v14M5 12h14"/></svg></button>
+          <div class="acc-body"><p id="artisanStory">Loading story…</p><p style="margin-top:8px;font-size:12px;color:var(--faint)">— <span id="artisanName"></span></p><a href="/heritage" style="color:var(--gold-deep);font-weight:700;font-size:12px;letter-spacing:.06em">Explore our approach to craft →</a></div>
+        </div>
+        <div class="acc-item"><button class="acc-head" aria-expanded="false">Shipping &amp; Returns<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><path d="M12 5v14M5 12h14"/></svg></button>
+          <div class="acc-body">Available delivery options, charges, estimated timelines and return eligibility are shown in the store policies and at checkout. <a href="/policies#returns" style="color:var(--gold-deep)">Full policy →</a></div>
+        </div>
+        <div class="acc-item"><button class="acc-head" aria-expanded="false">Silver Care<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><path d="M12 5v14M5 12h14"/></svg></button>
+          <div class="acc-body">Sterling silver loves skin contact and hates sulphates. Wipe with the included polish cloth after wear, store in the zip pouch provided, avoid perfumes directly on the piece. If it dulls, a soft cloth brings back the mirror — no chemicals needed.</div>
+        </div>
+      </div>
+    </div>
+
+    <!-- ═══ PURCHASE PANEL ═══ -->
+    <div>
+      <span class="pdp-artisan" id="pdpArtisan"></span>
+      <h1 class="pdp-name" id="pdpName">Loading…</h1>
+
+      <div class="pdp-price">
+        <span class="now" id="pdpPrice">₹0</span>
+        <span class="was" id="pdpCompare" style="display:none">₹0</span>
+        <span class="off" id="pdpOff" style="display:none">0% off</span>
+      </div>
+      <p class="pdp-tax">Inclusive of all taxes · HUID <span id="pdpHuidInline">—</span> · <span id="pdpWeight">—</span> · 925 Sterling Silver</p>
+
+      <div class="pc-meta" style="margin-bottom:6px"><span class="pc-stars" id="pdpStars"></span><span id="pdpRating">No published reviews yet</span> · <span id="pdpStock" style="color:var(--success);font-weight:600">In stock</span></div>
+
+      <p id="pdpDesc" style="color:var(--soft-ink);font-size:14.5px;margin-bottom:14px"></p>
+
+      <div id="sizeBlock">
+        <div style="display:flex;justify-content:space-between;align-items:center">
+          <label style="font-size:11px;letter-spacing:.2em;text-transform:uppercase;font-weight:700;color:var(--soft-ink)">Ring size</label>
+          <button class="size-guide-btn" id="sizeGuideBtn">Size guide →</button>
+        </div>
+        <div class="size-row" id="sizeRow"></div>
+      </div>
+
+      <label style="font-size:11px;letter-spacing:.2em;text-transform:uppercase;font-weight:700;color:var(--soft-ink);margin-top:12px;display:block">Quantity</label>
+      <div class="qty" style="margin:8px 0 4px">
+        <button type="button" id="qtyDec" aria-label="Decrease quantity">−</button>
+        <span id="qtyVal">1</span>
+        <button type="button" id="qtyInc" aria-label="Increase quantity">+</button>
+      </div>
+
+      <div class="pdp-actions">
+        <button class="btn btn-dark btn-shimmer" id="addToBagBtn">
+          <svg width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M6 6h15l-1.6 12.2a2 2 0 0 1-2 1.8H8.4a2 2 0 0 1-2-1.8L4.8 4.6A2 2 0 0 0 2.9 3H1.8"/><circle cx="10" cy="22" r="1.1"/><circle cx="16.5" cy="22" r="1.1"/></svg>
+          Add to Bag
+        </button>
+        <button class="btn btn-gold" id="buyNowBtn">Buy Now</button>
+        <button class="wishlist-big" id="pdpWishlist" aria-label="Add to wishlist" aria-pressed="false">
+          <svg viewBox="0 0 24 24" width="22" height="22" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round"><path d="M20.8 4.6a5.5 5.5 0 0 0-7.8 0L12 5.7l-1-1.1a5.5 5.5 0 0 0-7.8 7.8l1 1L12 21l7.8-7.6 1-1a5.5 5.5 0 0 0 0-7.8z"/></svg>
+        </button>
+      </div>
+      <p style="font-size:11px;color:var(--faint);letter-spacing:.04em;margin-bottom:18px">Delivery, payment and available offers are confirmed at checkout.</p>
+
+      <!-- ═══ REVIEWS ═══ -->
+      <div style="border-top:1px solid var(--line);padding-top:18px">
+        <div style="display:flex;justify-content:space-between;align-items:center;gap:14px;flex-wrap:wrap">
+          <h2 style="font-family:var(--font-display);font-size:23px;color:var(--charcoal)">What wearers say</h2>
+          <button class="btn btn-outline btn-sm" id="writeReviewBtn">Write a review</button>
+        </div>
+        <div class="review-summary" style="margin-top:14px">
+          <div><div class="review-big" id="avgRating">—</div><div class="stars" id="avgStars"></div><div style="font-size:11px;color:var(--faint)"><span id="reviewCount">0</span> published reviews</div></div>
+          <div id="ratingBars" style="flex:1;font-size:12px"></div>
+        </div>
+        <div id="reviewList"></div>
+        <form id="reviewForm" style="display:none;margin-top:14px;border:1px solid var(--line);border-radius:var(--radius);padding:16px;background:var(--paper)">
+          <label style="font-size:11px;letter-spacing:.14em;text-transform:uppercase;font-weight:700;color:var(--soft-ink)">Your rating</label>
+          <div class="size-row" id="starPick" role="radiogroup" aria-label="Star rating">
+            <button type="button" class="size-btn" data-star="1">1★</button><button type="button" class="size-btn" data-star="2">2★</button><button type="button" class="size-btn" data-star="3">3★</button><button type="button" class="size-btn" data-star="4">4★</button><button type="button" class="size-btn active" data-star="5">5★</button>
+          </div>
+          <div class="field" style="margin-top:12px"><label for="reviewTitle">Headline</label><input id="reviewTitle" maxlength="120" placeholder="In a few words…" required></div>
+          <div class="field"><label for="reviewBody">Your experience</label><textarea id="reviewBody" rows="3" maxlength="1000" placeholder="How does it sit on the skin? Does the finish hold up?" required></textarea></div>
+          <button type="submit" class="btn btn-dark btn-sm">Submit review</button>
+        </form>
+      </div>
+    </div>
+  </div>
+
+  <!-- ═══ RELATED ═══ -->
+  <section class="section" style="padding-top:10px">
+    <span class="kicker">You May Also Adore</span>
+    <div class="product-grid" id="relatedGrid" style="margin-top:16px"></div>
+  </section>
+</main>
+
+<!-- ═══ SIZE GUIDE MODAL ═══ -->
+<div class="lightbox" id="sizeGuideModal" role="dialog" aria-modal="true" aria-label="Ring size guide">
+  <div class="lightbox-box">
+    <h3>Ring size guide</h3>
+    <p style="font-size:13px;color:var(--soft-ink)">Wrap a strip of paper around the base of your finger, mark where it overlaps, and measure the length in mm. Match to the nearest size below.</p>
+    <table class="size-table">
+      <thead><tr><th>Indian size</th><th>Circumference (mm)</th><th>Diameter (mm)</th></tr></thead>
+      <tbody>
+        <tr><td>8</td><td>46.5</td><td>14.8</td></tr><tr><td>10</td><td>49.3</td><td>15.7</td></tr><tr><td>12</td><td>52.1</td><td>16.6</td></tr><tr><td>13</td><td>54.0</td><td>17.2</td></tr><tr><td>14</td><td>55.7</td><td>17.7</td></tr><tr><td>16</td><td>58.9</td><td>18.8</td></tr><tr><td>18</td><td>62.1</td><td>19.8</td></tr><tr><td>20</td><td>65.7</td><td>20.9</td></tr>
+      </tbody>
+    </table>
+    <p style="font-size:11px;color:var(--faint)">Between sizes? Size down for a snug band, up for stacking. Free resizing within 30 days — just WhatsApp us.</p>
+    <button class="btn btn-dark btn-block" data-close-modal style="margin-top:10px">Got it</button>
+  </div>
+</div>
+
+<div data-layout="footer"></div>
+
+<script src="/js/layout.js"></script>
+
+<script src="/js/store.js"></script>
+<script src="/js/cards.js"></script>
+<script src="/js/product.js"></script>
+</body>
+</html>

@@ -1,0 +1,58 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Contact — Chandrahasa | We Reply Within 24h</title>
+<meta name="description" content="Questions about sizing, orders or care? Use the contact details provided by the store owner.">
+<link rel="icon" type="image/svg+xml" href="/assets/favicon.svg">
+<link rel="stylesheet" href="/css/style.css">
+</head>
+<body>
+<div data-layout="header"></div>
+
+<main>
+  <div class="container" style="padding:40px 0 70px">
+    <span class="kicker">Talk to a Human</span>
+    <h1 class="h-serif" style="margin-bottom:8px">We’re at the<br><em>bench, not a bot.</em></h1>
+    <p class="lede" style="margin-bottom:34px">Sizing, order tracking and product questions: please use the verified contact details below.</p>
+
+    <div style="display:grid;grid-template-columns:1.1fr .9fr;gap:34px" id="contactGrid">
+      <form id="contactForm" class="panel" style="margin:0" novalidate>
+        <h2 style="margin-bottom:14px">Write to us</h2>
+        <div class="form-error" id="contactError"></div>
+        <div class="field-row">
+          <div class="field"><label for="ctName">Your name *</label><input id="ctName" required maxlength="80" placeholder="Priya Sharma"></div>
+          <div class="field"><label for="ctEmail">Email *</label><input id="ctEmail" type="email" required maxlength="254" placeholder="you@example.com"></div>
+        </div>
+        <div class="field"><label for="ctSubject">Subject</label><input id="ctSubject" maxlength="120" placeholder="Order #123 / Sizing / Wholesale…"></div>
+        <div class="field"><label for="ctMessage">Your message *</label><textarea id="ctMessage" rows="4" required minlength="10" maxlength="2000" placeholder="Tell us everything — the piece, the occasion, the finger size if you know it…"></textarea></div>
+        <button type="submit" class="btn btn-dark" id="contactBtn">Send message</button>
+      </form>
+
+      <div>
+        <div class="panel" style="margin-bottom:14px">
+          <h2 style="margin-bottom:10px">WhatsApp (fastest)</h2>
+          <p style="font-size:13.5px;color:var(--soft-ink);margin-bottom:12px">Support hours and response times should be confirmed by the store owner.</p>
+          <a class="btn btn-gold btn-block" href="https://wa.me/919000000002?text=Namaste%20Chandrahasa%20—%20I%20have%20a%20question%20about%20your%20silver%20jewellery" target="_blank" rel="noopener">Chat on WhatsApp →</a>
+        </div>
+        <div class="panel" style="margin-bottom:14px">
+          <h2 style="margin-bottom:10px">The Bench</h2>
+          <p style="font-size:13.5px;color:var(--soft-ink);line-height:1.8">Store owner: replace this sample contact block with verified business address, email, phone and tax details before launch.</p>
+        </div>
+        <div class="panel" style="margin:0">
+          <h2 style="margin-bottom:10px">Care hours</h2>
+          <p style="font-size:13px;color:var(--soft-ink)">Mon–Sat · 10:00–19:00 IST<br>Sundays — the karigars rest (we do too, mostly).</p>
+        </div>
+      </div>
+    </div>
+  </div>
+</main>
+
+<div data-layout="footer"></div>
+<script src="/js/layout.js"></script>
+
+<script src="/js/store.js"></script>
+<script src="/js/contact.js"></script>
+</body>
+</html>

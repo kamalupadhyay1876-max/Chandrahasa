@@ -1,0 +1,141 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Admin Studio — Chandrahasa</title>
+<meta name="robots" content="noindex, nofollow">
+<link rel="stylesheet" href="/css/style.css">
+</head>
+<body style="background:#f2ede2">
+
+<div class="admin-shell">
+  <!-- ══ SIDEBAR ══ -->
+  <aside class="admin-side">
+    <a class="brand" href="/" style="text-decoration:none"><span class="brand-name">Chandrahasa</span><span class="brand-tag">admin studio</span></a>
+    <nav aria-label="Admin sections">
+      <a class="admin-link" href="/admin-operations.html">Operations</a>
+      <a class="admin-link" href="/admin-marketplace.html">Marketplace Ops</a>
+      <a class="admin-link active" href="#overview" data-admin-tab="overview"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round"><path d="M3 3v18h18"/><path d="M7 14l4-4 4 4 5-6"/></svg>Overview</a>
+      <a class="admin-link" href="#products" data-admin-tab="products"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round"><path d="M20 7l-8-4-8 4v10l8 4 8-4z"/><path d="M4 7l8 4 8-4M12 11v10"/></svg>Products</a>
+      <a class="admin-link" href="#orders" data-admin-tab="orders"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round"><path d="M6 2h12v20l-3-2-3 2-3-2-3 2z"/><path d="M9 7h6M9 11h6"/></svg>Orders</a>
+      <a class="admin-link" href="#customers" data-admin-tab="customers"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round"><circle cx="9" cy="8" r="3.5"/><path d="M2.5 20c0-3.6 3-6 6.5-6s6.5 2.4 6.5 6"/><circle cx="17.5" cy="9.5" r="2.6"/><path d="M15.5 14.3c3.2.5 5.5 2.8 5.5 5.7"/></svg>Customers</a>
+      <a class="admin-link" href="#coupons" data-admin-tab="coupons"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round"><path d="M3 9V5a2 2 0 0 1 2-2h4l2 3h10a2 2 0 0 1 2 2v10a2 2 0 0 1-2 2h-4l-2-3H5a2 2 0 0 1-2-2z" transform="rotate(0)"/><path d="M9 15l6-6"/></svg>Coupons</a>
+    </nav>
+    <div style="margin-top:auto;padding:0 22px;font-size:11px;color:#6f6a5e">Signed in as<br><b id="adminWho" style="color:#d9c07a">—</b><br><a href="/" style="color:#a8a193;text-decoration:none;display:inline-block;margin-top:10px">← Back to storefront</a><br><button data-signout style="background:none;border:none;color:#c96f5a;font-size:12px;padding:8px 0;cursor:pointer">Sign out</button></div>
+  </aside>
+
+  <!-- ══ MAIN ══ -->
+  <main class="admin-main">
+    <span class="kicker" style="margin-bottom:4px">The Workshop Ledger</span>
+    <h1 class="h-serif" style="font-size:clamp(26px,3.4vw,38px)">Good to see you, <em id="adminGreeting">Karigar</em>.</h1>
+
+    <!-- OVERVIEW -->
+    <section id="tab-overview" class="admin-tab">
+      <div class="stat-grid">
+        <div class="stat-card"><span>Total Revenue</span><b id="stRevenue">—</b><small id="stRevenueToday">— today</small></div>
+        <div class="stat-card"><span>Orders</span><b id="stOrders">—</b><small id="stPending">— awaiting fulfilment</small></div>
+        <div class="stat-card"><span>Avg. Order Value</span><b id="stAov">—</b><small>across paid orders</small></div>
+        <div class="stat-card"><span>Customers</span><b id="stCustomers">—</b><small>registered accounts</small></div>
+      </div>
+      <div class="admin-panel chart-card">
+        <h2>Revenue — last 14 days</h2>
+        <svg id="salesChart" viewBox="0 0 720 210" role="img" aria-label="Revenue chart for the last 14 days"></svg>
+      </div>
+      <div style="display:grid;grid-template-columns:1.2fr 1fr;gap:14px" id="overviewSplit">
+        <div class="admin-panel"><h2>Top pieces</h2><div id="topProducts"><p style="color:var(--faint);font-size:13px">No paid orders yet.</p></div></div>
+        <div class="admin-panel"><h2>Low stock — restock soon</h2><div id="lowStock"></div></div>
+      </div>
+    </section>
+
+    <!-- PRODUCTS -->
+    <section id="tab-products" class="admin-tab hidden">
+      <div class="admin-panel">
+        <div style="display:flex;justify-content:space-between;align-items:center;gap:14px;margin-bottom:12px;flex-wrap:wrap">
+          <h2 style="margin:0">The Collection</h2>
+          <div style="display:flex;gap:10px;flex:1;justify-content:flex-end;min-width:260px">
+            <input id="productSearch" placeholder="Search name, slug or HUID…" style="border:1px solid var(--line-strong);border-radius:var(--radius-sm);padding:10px 12px;font-family:inherit;min-width:0;flex:1;max-width:320px" aria-label="Search products">
+            <button class="btn btn-dark btn-sm" id="addProductBtn">+ Add Piece</button>
+          </div>
+        </div>
+        <div style="overflow-x:auto"><table class="admin-table" id="productsTable"><thead><tr><th></th><th>Piece</th><th>Category</th><th>Price</th><th>Stock</th><th>HUID</th><th>Active</th><th></th></tr></thead><tbody></tbody></table></div>
+      </div>
+    </section>
+
+    <!-- ORDERS -->
+    <section id="tab-orders" class="admin-tab hidden">
+      <div class="admin-panel">
+        <div style="display:flex;justify-content:space-between;align-items:center;gap:14px;margin-bottom:12px;flex-wrap:wrap">
+          <h2 style="margin:0">Order Ledger</h2>
+          <select class="sort-select" id="orderStatusFilter" aria-label="Filter by status">
+            <option value="all">All orders</option><option value="pending">Pending</option><option value="confirmed">Confirmed</option><option value="shipped">Shipped</option><option value="out_for_delivery">Out for delivery</option><option value="delivered">Delivered</option><option value="cancelled">Cancelled</option>
+          </select>
+        </div>
+        <div style="overflow-x:auto"><table class="admin-table" id="ordersTable"><thead><tr><th>#</th><th>Date</th><th>Customer</th><th>Items</th><th>Total</th><th>Payment</th><th>Status</th></tr></thead><tbody></tbody></table></div>
+      </div>
+    </section>
+
+    <!-- CUSTOMERS -->
+    <section id="tab-customers" class="admin-tab hidden">
+      <div class="admin-panel"><h2>Customers</h2><div style="overflow-x:auto"><table class="admin-table" id="customersTable"><thead><tr><th>Name</th><th>Email</th><th>Phone</th><th>Orders</th><th>Lifetime value</th><th>Joined</th></tr></thead><tbody></tbody></table></div></div>
+    </section>
+
+    <!-- COUPONS -->
+    <section id="tab-coupons" class="admin-tab hidden">
+      <div style="display:grid;grid-template-columns:400px 1fr;gap:14px;align-items:start" id="couponsGrid">
+        <form class="admin-panel" id="couponForm" style="margin:0">
+          <h2>Forge a new code</h2>
+          <div class="field"><label for="cpCode">Code *</label><input id="cpCode" required placeholder="DIWALI25" style="text-transform:uppercase" maxlength="20"></div>
+          <div class="field-row">
+            <div class="field"><label for="cpType">Type</label><select id="cpType"><option value="percentage">Percentage (%)</option><option value="fixed">Fixed (₹)</option></select></div>
+            <div class="field"><label for="cpValue">Value *</label><input id="cpValue" required type="number" min="1" placeholder="20"></div>
+          </div>
+          <div class="field-row">
+            <div class="field"><label for="cpMin">Min order (₹)</label><input id="cpMin" type="number" min="0" value="999"></div>
+            <div class="field"><label for="cpLimit">Usage limit</label><input id="cpLimit" type="number" min="1" value="1000"></div>
+          </div>
+          <button type="submit" class="btn btn-dark btn-block">Create coupon</button>
+        </form>
+        <div class="admin-panel" style="margin:0"><h2>Live coupons</h2><div id="couponList"></div></div>
+      </div>
+    </section>
+  </main>
+</div>
+
+<!-- ══ ADD/EDIT PRODUCT MODAL ══ -->
+<div class="modal" id="productModal" role="dialog" aria-modal="true" aria-label="Product editor">
+  <div class="modal-box">
+    <h3 id="productModalTitle" style="font-family:var(--font-display);color:var(--charcoal);font-size:24px;margin-bottom:14px">Add a new piece</h3>
+    <form id="productForm">
+      <input type="hidden" id="pfId">
+      <div class="field"><label for="pfName">Name *</label><input id="pfName" required placeholder="Floral Silver Ring"></div>
+      <div class="field-row">
+        <div class="field"><label for="pfCategory">Category *</label><select id="pfCategory" required><option value="rings">Rings</option><option value="necklaces">Necklaces</option><option value="earrings">Earrings</option><option value="pendants">Pendants</option><option value="bracelets">Bracelets</option><option value="gift-sets">Gift Sets</option></select></div>
+        <div class="field"><label for="pfBadge">Badge</label><input id="pfBadge" placeholder="NEW / HOT / SALE…" maxlength="20"></div>
+      </div>
+      <div class="field-row">
+        <div class="field"><label for="pfPrice">Price (₹) *</label><input id="pfPrice" required type="number" min="1" placeholder="1299"></div>
+        <div class="field"><label for="pfCompare">Compare at (₹)</label><input id="pfCompare" type="number" min="0" placeholder="1899"></div>
+      </div>
+      <div class="field-row">
+        <div class="field"><label for="pfStock">Stock *</label><input id="pfStock" required type="number" min="0" placeholder="25"></div>
+        <div class="field"><label for="pfHuid">HUID</label><input id="pfHuid" placeholder="6-digit code" maxlength="8"></div>
+      </div>
+      <div class="field-row">
+        <div class="field"><label for="pfWeight">Weight</label><input id="pfWeight" placeholder="4.2 g"></div>
+        <div class="field"><label for="pfArtisan">Karigar</label><input id="pfArtisan" placeholder="Ramesh Prajapat · Jaipur"></div>
+      </div>
+      <div class="field"><label for="pfDesc">Description</label><textarea id="pfDesc" rows="2" placeholder="One lyrical line for the piece…"></textarea></div>
+      <div style="display:flex;gap:10px;justify-content:flex-end">
+        <button type="button" class="btn btn-outline btn-sm" id="cancelProductBtn">Cancel</button>
+        <button type="submit" class="btn btn-dark btn-sm">Save piece</button>
+      </div>
+    </form>
+  </div>
+</div>
+
+<script src="/js/store.js"></script>
+<script src="/js/admin.js"></script>
+
+</body>
+</html>

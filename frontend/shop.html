@@ -1,0 +1,78 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Shop 925 Silver Jewellery — Chandrahasa | Rings, Necklaces, Earrings &amp; More</title>
+<meta name="description" content="Browse the Chandrahasa jewellery collection. Compare product-specific materials, prices, images and availability before you choose.">
+<link rel="icon" type="image/svg+xml" href="/assets/favicon.svg">
+<link rel="stylesheet" href="/css/style.css">
+</head>
+<body>
+<div data-layout="header"></div>
+
+<main class="container">
+  <div class="shop-layout">
+    <!-- ══ FILTER SIDEBAR ══ -->
+    <aside class="filters" id="filterPanel" aria-label="Product filters">
+      <div style="display:flex;justify-content:space-between;align-items:center"><strong style="font-size:14px;letter-spacing:.1em;text-transform:uppercase">Refine</strong><button id="clearFilters" style="background:none;border:none;color:var(--gold-deep);font-size:12px;font-weight:700;text-decoration:underline">Clear all</button></div>
+
+      <h3>Category</h3>
+      <div id="catFilters"></div>
+
+      <h3>Price (₹)</h3>
+      <div class="price-inputs">
+        <input type="number" id="minPrice" placeholder="Min" min="0" aria-label="Minimum price">
+        <span style="color:var(--faint)">–</span>
+        <input type="number" id="maxPrice" placeholder="Max" min="0" aria-label="Maximum price">
+      </div>
+      <div class="size-row" style="margin-top:10px" id="priceChips">
+        <button class="size-btn" data-min="0" data-max="1500" style="height:34px;min-width:auto;font-size:11px">Under ₹1.5k</button>
+        <button class="size-btn" data-min="1500" data-max="3000" style="height:34px;min-width:auto;font-size:11px">₹1.5–3k</button>
+        <button class="size-btn" data-min="3000" data-max="1000000" style="height:34px;min-width:auto;font-size:11px">₹3k +</button>
+      </div>
+
+      <h3>Purity</h3>
+      <label class="filter-opt"><input type="radio" name="purity" checked> 925 Sterling Silver</label>
+      <label class="filter-opt"><input type="radio" name="purity" disabled> 999 Fine Silver <span style="color:var(--faint);font-size:11px">(soon)</span></label>
+
+      <h3>Availability</h3>
+      <label class="filter-opt"><input type="checkbox" id="inStock" checked> In stock only</label>
+
+      <h3>Offers</h3>
+      <label class="filter-opt"><input type="checkbox" id="onSale"> On sale / offers</label>
+    </aside>
+
+    <!-- ══ RESULTS ══ -->
+    <div>
+      <div class="shop-head">
+        <div>
+          <h1 id="shopTitle">All Silver</h1>
+          <div class="shop-count" id="shopCount">Loading the collection…</div>
+        </div>
+        <label style="display:flex;align-items:center;gap:10px;font-size:12px;color:var(--soft-ink)">Sort by
+          <select class="sort-select" id="sortSelect" aria-label="Sort products">
+            <option value="newest">Newest first</option>
+            <option value="popular">Most loved</option>
+            <option value="rating">Highest rated</option>
+            <option value="price-asc">Price: Low → High</option>
+            <option value="price-desc">Price: High → Low</option>
+          </select>
+        </label>
+      </div>
+      <button class="btn btn-outline btn-sm filter-toggle" id="filterToggle">☰ Filters</button>
+      <div class="product-grid" id="shopGrid"></div>
+      <div class="load-more-wrap"><button class="btn btn-outline" id="loadMoreBtn">Load more pieces</button></div>
+    </div>
+  </div>
+</main>
+
+<div data-layout="footer"></div>
+
+<script src="/js/layout.js"></script>
+
+<script src="/js/store.js"></script>
+<script src="/js/cards.js"></script>
+<script src="/js/shop.js"></script>
+</body>
+</html>
