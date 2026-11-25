@@ -206,13 +206,16 @@ document.addEventListener('DOMContentLoaded', async () => {
     const btn = e.target.closest('[data-add-to-cart]');
     if (!btn) return;
     e.preventDefault(); e.stopPropagation();
+    const productCard = btn.closest('.product-card');
+    const cardImage = productCard?.querySelector('.pc-media img');
+    const productImage = btn.dataset.image || cardImage?.currentSrc || cardImage?.getAttribute('src') || '';
     const payload = {
       productId: Number(btn.dataset.addToCart),
       qty: 1,
       size: btn.dataset.size || '',
-      name: btn.dataset.name || 'Chandrahasa Piece',
+      name: btn.dataset.name || productCard?.querySelector('.pc-name')?.textContent?.trim() || 'Chandrahasa Piece',
       price: Number(btn.dataset.price || 0),
-      image: btn.dataset.image || '',
+      image: productImage,
       huid: btn.dataset.huid || '',
       stock: Number(btn.dataset.stock || 99),
     };
