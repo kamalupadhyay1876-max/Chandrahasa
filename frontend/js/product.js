@@ -23,7 +23,7 @@ const fmt = CH.money;
     $('#pdpName').textContent = product.name;
     $('#pdpArtisan').textContent = product.artisan;
     $('#pdpPrice').textContent = fmt(product.price);
-    const img = product.images && product.images[0] ? product.images[0] : '';
+    const img = CH.safeImageUrl ? CH.safeImageUrl(product.images && product.images[0]) : '';
     const photo = $('#pdpPhoto'); if (img) { photo.src = img; photo.alt = product.name; photo.style.display = 'block'; } else { photo.removeAttribute('src'); photo.alt = 'Product image unavailable'; photo.style.display = 'none'; }
     $('#pdpBadge').textContent = product.badge || ''; $('#pdpBadge').hidden = !product.badge;
     $('#pdpDesc').textContent = product.description;

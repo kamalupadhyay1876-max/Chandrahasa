@@ -5,10 +5,10 @@ CH.escapeHTML = CH.escapeHTML || function escapeHTML(value) {
 };
 CH.productCardHTML = function productCardHTML(p) {
   const esc = CH.escapeHTML;
-  const img = p.images && p.images[0] ? p.images[0] : '';
+  const img = CH.safeImageUrl ? CH.safeImageUrl(p.images && p.images[0]) : '';
   const image = img
     ? `<img src="${esc(img)}" alt="${esc(p.name)}" loading="lazy" decoding="async">`
-    : `<div class="pc-image-empty" role="img" aria-label="Product image not available"><span>Image coming from catalogue</span></div>`;
+    : `<div class="pc-image-empty" role="img" aria-label="Product image not available"><span>CH</span></div>`;
   const discount = p.compare_price && p.compare_price > p.price ? Math.round((1 - p.price / p.compare_price) * 100) : 0;
   const badge = p.badge ? `<span class="pc-badge ${/SALE|OFFER|HOT/i.test(p.badge) ? 'gold' : ''}">${esc(p.badge)}</span>` : '';
   const compare = discount ? `<span class="pc-compare">${CH.money(p.compare_price)}</span><span class="pc-off">${discount}% off</span>` : '';

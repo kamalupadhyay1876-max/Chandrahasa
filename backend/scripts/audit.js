@@ -109,3 +109,10 @@ check('Grid add-to-cart inherits the product card image when button metadata is 
 process.exitCode=fail?1:0;
 
 console.log(`\nAudit checks: ${pass} passed, ${fail} failed. Source checks are not live provider verification or a security certification.`);
+
+check('Auth forms explicitly run browser validity checks despite novalidate markup',()=>{const s=read(path.join(front,'js','auth.js'));for(const marker of ['form.reportValidity()','forgotForm.reportValidity()','resetForm.reportValidity()'])if(!s.includes(marker))throw Error('missing '+marker);});
+check('Password reset UI matches the 16-character server policy',()=>{const h=read(path.join(front,'reset-password.html')),s=read(path.join(root,'server.js'));if(!h.includes('minlength=\"16\"')||!s.includes('Password must be 16–128 characters.'))throw Error('password policy mismatch');});
+check('Checkout validates required fields and Indian phone/PIN before API call',()=>{const s=read(path.join(front,'js','checkout.js'));if(!s.includes(\"$('#checkoutForm').reportValidity()\")||!s.includes('pinField.setCustomValidity')||!s.includes('phoneField.setCustomValidity'))throw Error('checkout validation missing');});
+check('Guest order tracking collects and sends confirmation token',()=>{const s=read(path.join(front,'js','feature-pages.js'));if(!s.includes(\"field('token','Guest confirmation token\")||!s.includes(\"'?token='+encodeURIComponent(token)\"))throw Error('guest tracking token flow missing');});
+check('Success page never claims confirmation before server verification',()=>{const s=read(path.join(front,'js','success.js')),h=read(path.join(front,'success.html'));if(!s.includes('showUnverified')||!s.includes('No valid order reference')||!h.includes('Verifying your order'))throw Error('unverified success state missing');});
+check('Product renderers reject broken and cross-origin catalogue image URLs',()=>{const s=read(path.join(front,'js','store.js')),c=read(path.join(front,'js','cards.js')),p=read(path.join(front,'js','product.js'));if(!s.includes('CH.safeImageUrl')||!c.includes('CH.safeImageUrl')||!p.includes('CH.safeImageUrl'))throw Error('safe image helper not shared across renderers');});

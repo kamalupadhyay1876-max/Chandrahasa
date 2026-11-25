@@ -26,8 +26,7 @@ async function loadSummary() {
   } else {
     const safe = value => String(value ?? '').replace(/[&<>"']/g, ch => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[ch]));
     wrap.innerHTML = state.items.map(i => {
-      const remoteImage = typeof i.image === 'string' && /^https?:\/\//i.test(i.image) && !/[ \t\r\n"'<>\\\\]/.test(i.image);
-      const image = typeof i.image === 'string' && (/^\/(?:uploads|assets)\/[A-Za-z0-9_-]+(?:\/[A-Za-z0-9_.-]+)*$/.test(i.image) || remoteImage) ? i.image : '';
+      const image = CH.safeImageUrl(i.image);
       const media = image ? `<img src="${safe(image)}" alt="${safe(i.name)}" loading="lazy">` : '<div class="summary-image-empty" aria-label="No product image available">CH</div>';
       return `<div class="summary-line">${media}
         <div style="flex:1"><b style="font-size:13px;color:var(--charcoal);display:block">${safe(i.name)}</b>
@@ -114,7 +113,11 @@ $('#checkoutForm').addEventListener('submit', async (e) => {
   errorBox.classList.remove('show');
   if (state.loadError) return showError('Your bag could not be loaded. Please retry before placing the order.');
   if (!state.items.length) return showError('Your bag is empty — add a piece before checking out.');
-  const email = $('#coEmail').value.trim(), phone = $('#coPhone').value.trim();
+  const phoneField = $('#coPhone'), pinField = $('#coPincode');
+  phoneField.setCustomValidity(/^\+?[0-9\s-]{10,15}$/.test(phoneField.value.trim()) ? '' : 'Enter a valid phone number (10–15 digits).');
+  pinField.setCustomValidity(/^[1-9][0-9]{5}$/.test(pinField.value.trim()) ? '' : 'Enter a valid 6-digit PIN code.');
+  if (!$('#checkoutForm').reportValidity()) return;
+  const email = $('#coEmail').value.trim(), phone = phoneField.value.trim();
   const address = { name: $('#coName').value.trim(), line1: $('#coLine1').value.trim(), line2: $('#coLine2').value.trim(), city: $('#coCity').value.trim(), state: $('#coState').value, pincode: $('#coPincode').value.trim() };
   const btn = $('#placeOrderBtn'); btn.disabled = true; btn.innerHTML = '<span class="spinner"></span>Placing your order…';
   try {
