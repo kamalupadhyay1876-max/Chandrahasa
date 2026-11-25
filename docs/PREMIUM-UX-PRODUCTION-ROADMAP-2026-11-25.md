@@ -83,4 +83,4 @@ Build a premium, clear, fast and dependable jewellery storefront with a focused 
 
 ## Explicitly not claimed complete
 
-This visual pass does not implement every item above. Payment-provider credentials, live refund/shipping flows, authenticated end-to-end Admin CRUD, media upload/restore drills, full settings-to-storefront rendering, load testing and independent penetration testing must each be verified separately. Keep SQLite single-writer deployment constraints unless a tested database migration is completed.
+This branch now includes the listed visual and interaction changes, but it still does not implement every item above. Payment-provider credentials, live refund/shipping flows, authenticated end-to-end Admin CRUD, media upload/restore drills, full settings-to-storefront rendering, load testing and independent penetration testing must each be verified separately. Keep SQLite single-writer deployment constraints unless a tested database migration is completed.
