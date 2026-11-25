@@ -13,6 +13,8 @@ ADMIN_EMAIL='the-existing-owner-email' ADMIN_PASSWORD='new-random-16+-character-
 
 The recovery script requires an existing account, never creates a new account, will not overwrite a different existing Admin, revokes old sessions, and does not print the password. Use Railway's private shell only; never place these values in GitHub, a public URL, browser console, or chat. Remove the environment values after the command.
 
+If no account exists yet and the one-time setup key is lost, create the first owner from the private Railway shell with `ADMIN_EMAIL`, `ADMIN_PASSWORD` (16–128 characters), and `ADMIN_NAME` set, then run `node scripts/create-admin.js`. This does not require the browser setup key and refuses to create a duplicate Admin. Remove the temporary environment values immediately afterward.
+
 If no Admin exists but an existing customer account does, the script can promote that exact existing account after the explicit shell confirmation. If an Admin already exists, the script only resets that Admin's password.
 
 ## Automatic and manual backups
