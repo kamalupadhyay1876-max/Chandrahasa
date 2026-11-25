@@ -355,7 +355,7 @@ async function applyStoreCustomizations(){
     }
     const radius=values['customization.theme.radius'];
     if(typeof radius==='string'&&/^\d{1,2}px$/.test(radius))root.style.setProperty('--radius',radius);
-    const announcement=values['customization.storefront.announcement'];
+    const announcement=values['customization.store.announcement'];
     if(typeof announcement==='string'&&announcement.length<=180){
       const node=document.querySelector('[data-announcement-text]');
       if(node)node.textContent=announcement;
