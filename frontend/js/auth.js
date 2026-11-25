@@ -36,8 +36,7 @@ bindForm('#signupForm', '#signupBtn', async () => {
   if (password !== confirm) throw new Error('The two passwords do not match.');
   if (password.length < 16) throw new Error('Password must be at least 16 characters.');
   if (!/^\+?[0-9\s-]{10,15}$/.test(phone)) throw new Error('Enter a valid phone number (10–15 digits).');
-  const ownerSetupKey = $('#suOwnerKey')?.value.trim() || '';
-  await CH.api('/api/auth/signup', { body: { name, email, phone, password, ownerSetupKey } });
+  await CH.api('/api/auth/signup', { body: { name, email, phone, password } });
 });
 
 /* LOG IN */

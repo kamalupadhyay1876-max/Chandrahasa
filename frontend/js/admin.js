@@ -5,32 +5,67 @@ const $ = (s, c = document) => c.querySelector(s);
 const $$ = (s, c = document) => [...c.querySelectorAll(s)];
 const fmt = CH.money;
 
-/* ── guard: admin only ── */
+/* ── private admin access: sign-in and first-owner setup exist only here ── */
 (async function guard() {
-  const showAccessMessage = (message) => {
-    const main = $('.admin-main');
-    if (!main) return;
-    main.innerHTML = `<section class="admin-panel" role="alert" style="max-width:620px;margin:8vh auto;padding:32px">
-      <span class="kicker">Chandrahasa · Owner access</span>
-      <h1 class="h-serif" style="font-size:clamp(26px,4vw,38px)">Admin access required</h1>
-      <p style="line-height:1.7;color:var(--soft-ink)">${message}</p>
-      <a class="btn btn-dark" href="/login?next=%2Fadmin">Sign in to Admin</a>
-      <a href="/" style="display:inline-block;margin:16px;color:var(--soft-ink)">Return to storefront</a>
-    </section>`;
+  const main = $('.admin-main');
+  const showGate = async () => {
+    let status = { hasAdmin: true, canBootstrap: false };
+    try { status = await CH.api('/api/admin/access/status'); } catch {}
+    main.innerHTML = `
+      <section class="admin-panel" style="max-width:620px;margin:6vh auto;padding:clamp(22px,5vw,42px)">
+        <span class="kicker">Chandrahasa · Private owner portal</span>
+        <h1 class="h-serif" style="font-size:clamp(28px,4vw,40px)">${status.canBootstrap ? 'Claim store ownership' : 'Owner sign in'}</h1>
+        <p style="line-height:1.7;color:var(--soft-ink)">Admin authentication is available only from this private /admin page. Customer accounts cannot access the workshop.</p>
+        <div id="adminGateError" role="alert" style="color:var(--danger);margin:12px 0"></div>
+        ${status.canBootstrap ? `
+          <form id="ownerBootstrapForm">
+            <div class="field"><label for="ownerName">Owner name *</label><input id="ownerName" required maxlength="80" autocomplete="name"></div>
+            <div class="field"><label for="ownerEmail">Owner email *</label><input id="ownerEmail" type="email" required autocomplete="email"></div>
+            <div class="field"><label for="ownerPhone">Phone</label><input id="ownerPhone" autocomplete="tel"></div>
+            <div class="field"><label for="ownerSetupKey">Private one-time setup key *</label><input id="ownerSetupKey" type="password" required autocomplete="off"></div>
+            <div class="field"><label for="ownerPassword">Password (16–128 characters) *</label><input id="ownerPassword" type="password" required minlength="16" maxlength="128" autocomplete="new-password"></div>
+            <div class="field"><label for="ownerPassword2">Confirm password *</label><input id="ownerPassword2" type="password" required minlength="16" maxlength="128" autocomplete="new-password"></div>
+            <button class="btn btn-dark btn-block" type="submit">Create first Owner account</button>
+          </form>
+        ` : `
+          <form id="adminLoginForm">
+            <div class="field"><label for="adminEmail">Owner email</label><input id="adminEmail" type="email" required autocomplete="username"></div>
+            <div class="field"><label for="adminPassword">Password</label><input id="adminPassword" type="password" required autocomplete="current-password"></div>
+            <button class="btn btn-dark btn-block" type="submit">Sign in to Admin Studio</button>
+            <p style="margin-top:14px"><a href="/forgot-password">Forgot owner password?</a></p>
+          </form>
+          ${status.hasAdmin ? '' : '<p>Existing customer data is present but no Admin is provisioned. Use the private Railway recovery procedure; public signup will not grant admin privileges.</p>'}
+        `}
+        <p style="margin-top:18px"><a href="/">Return to storefront</a></p>
+      </section>`;
+    $('#adminLoginForm')?.addEventListener('submit', async e => {
+      e.preventDefault();
+      const btn=e.submitter; if(btn)btn.disabled=true;
+      try { await CH.api('/api/auth/login',{body:{email:$('#adminEmail').value.trim(),password:$('#adminPassword').value}}); location.reload(); }
+      catch(err){$('#adminGateError').textContent=err.message; if(btn)btn.disabled=false;}
+    });
+    $('#ownerBootstrapForm')?.addEventListener('submit', async e => {
+      e.preventDefault();
+      const btn=e.submitter; if(btn)btn.disabled=true;
+      const password=$('#ownerPassword').value;
+      if(password!==$('#ownerPassword2').value){$('#adminGateError').textContent='Passwords do not match.';if(btn)btn.disabled=false;return;}
+      try {
+        await CH.api('/api/auth/signup',{body:{adminPanel:true,name:$('#ownerName').value.trim(),email:$('#ownerEmail').value.trim(),phone:$('#ownerPhone').value.trim(),password,ownerSetupKey:$('#ownerSetupKey').value}});
+        location.reload();
+      } catch(err){$('#adminGateError').textContent=err.message;if(btn)btn.disabled=false;}
+    });
   };
   try {
-    const me = await CH.api('/api/auth/me');
-    if (!me.user) { window.location.replace('/login?next=%2Fadmin'); return; }
-    if (me.user.role !== 'admin') {
-      showAccessMessage('You are signed in as a customer. This account does not have owner/admin privileges. Sign out and use the separately provisioned store-owner account.');
+    const me=await CH.api('/api/auth/me');
+    if(!me.user){await showGate();return;}
+    if(me.user.role!=='admin'){
+      main.innerHTML='<section class="admin-panel" role="alert" style="max-width:620px;margin:8vh auto;padding:32px"><span class="kicker">Private owner portal</span><h1 class="h-serif">Access denied</h1><p>This signed-in customer account does not have Admin permissions.</p><a class="btn btn-outline" href="/account">Customer account</a></section>';
       return;
     }
-    $('#adminWho').textContent = me.user.name + ' · ' + me.user.email;
-    $('#adminGreeting').textContent = me.user.name.split(' ')[0];
+    $('#adminWho').textContent=me.user.name+' · '+me.user.email;
+    $('#adminGreeting').textContent=me.user.name.split(' ')[0];
     boot();
-  } catch {
-    window.location.replace('/login?next=%2Fadmin');
-  }
+  } catch { await showGate(); }
 })();
 
 /* ── tab switching ── */
@@ -44,6 +79,9 @@ $$('[data-admin-tab]').forEach(link => link.addEventListener('click', (e) => {
   if (tab === 'orders') loadOrders();
   if (tab === 'customers') loadCustomers();
   if (tab === 'coupons') loadCoupons();
+  if (tab === 'customize') loadCustomizations();
+  if (tab === 'backups') loadBackups();
+  if (tab === 'media') loadMediaLibrary();
 }));
 
 function boot() { loadStats(); loadCategories(); startAdminLiveRefresh(); }
@@ -263,3 +301,82 @@ $('#couponList')?.addEventListener('click', async (e) => {
   if (toggle) { await CH.api('/api/admin/coupons/' + toggle.dataset.toggleCoupon, { method: 'PATCH' }); loadCoupons(); }
   if (del) { if (!confirm('Delete this coupon permanently?')) return; await CH.api('/api/admin/coupons/' + del.dataset.delCoupon, { method: 'DELETE' }); loadCoupons(); }
 });
+
+/* ── 220 owner-controlled customization fields ── */
+const customizationGroups = [
+  ['Brand identity','store.name,store.tagline,store.short_description,store.logo_url,store.logo_alt,store.favicon_url,store.contact_email,store.contact_phone,store.whatsapp,store.address,store.city,store.state,store.country,store.currency,store.locale,store.timezone,store.copyright,store.footer_note,store.announcement,store.announcement_link'],
+  ['Theme & colors','theme.primary,theme.accent,theme.background,theme.surface,theme.text,theme.muted,theme.border,theme.success,theme.warning,theme.danger,theme.radius,theme.shadow,theme.font,theme.heading_font,theme.button_style,theme.button_radius,theme.card_radius,theme.input_radius,theme.header_background,theme.footer_background'],
+  ['Header & navigation','header.logo_width,header.logo_height,header.sticky,header.transparent,header.show_search,header.show_account,header.show_wishlist,header.show_cart,header.show_announcement,header.announcement_text,header.announcement_color,header.announcement_background,header.menu_spacing,header.menu_font_size,header.mobile_menu_style,header.mobile_logo_alignment,header.search_placeholder,header.utility_text,header.utility_link,header.topbar_enabled'],
+  ['Homepage sections','home.hero_title,home.hero_subtitle,home.hero_image,home.hero_mobile_image,home.hero_cta_text,home.hero_cta_link,home.hero_overlay,home.hero_alignment,home.hero_height,home.show_categories,home.category_title,home.featured_title,home.featured_count,home.show_bestsellers,home.bestseller_title,home.show_new_arrivals,home.new_arrivals_title,home.story_title,home.story_text,home.newsletter_title'],
+  ['Product presentation','product.image_ratio,product.gallery_style,product.zoom_enabled,product.show_sku,product.show_huid,product.show_weight,product.show_purity,product.show_artisan,product.show_story,product.show_stock,product.low_stock_threshold,product.show_reviews,product.show_compare_price,product.show_badges,product.show_related,product.related_count,product.description_layout,product.thumbnail_position,product.card_hover,product.quick_view'],
+  ['Collection & search','collection.grid_desktop,collection.grid_tablet,collection.grid_mobile,collection.default_sort,collection.show_filters,collection.filter_position,collection.show_price_filter,collection.show_category_filter,collection.show_stock_filter,collection.show_badge_filter,collection.sidebar_width,collection.card_spacing,collection.show_count,collection.pagination_size,collection.search_empty_label,search.min_chars,search.max_results,search.show_suggestions,search.show_recent,search.empty_message'],
+  ['Cart & checkout','checkout.guest_enabled,checkout.phone_required,checkout.address_line2,checkout.order_note,checkout.terms_required,checkout.cod_enabled,checkout.cod_fee,checkout.free_shipping_threshold,checkout.shipping_fee,checkout.tax_label,checkout.tax_rate,checkout.coupon_enabled,checkout.stock_hold_minutes,checkout.success_title,checkout.success_message,cart.drawer_enabled,cart.show_recommendations,cart.recommendation_count,cart.empty_message,cart.continue_shopping_text'],
+  ['Footer & content','footer.columns,footer.show_newsletter,footer.newsletter_text,footer.show_social,footer.show_payment_icons,footer.show_shipping_info,footer.show_returns_info,footer.show_contact,footer.show_address,footer.show_copyright,content.about_title,content.about_text,content.craft_title,content.craft_text,content.shipping_title,content.returns_title,content.privacy_title,content.terms_title,content.faq_title,content.contact_title'],
+  ['SEO & discovery','seo.site_title,seo.meta_description,seo.default_image,seo.robots,seo.canonical_base,seo.og_title,seo.og_description,seo.twitter_handle,seo.schema_brand,seo.schema_price_currency,seo.google_site_verification,seo.bing_site_verification,seo.product_title_template,seo.category_title_template,seo.noindex_search,seo.noindex_account,seo.sitemap_enabled,seo.breadcrumbs_enabled,seo.alt_text_fallback,seo.search_keywords'],
+  ['Marketing & social','marketing.instagram,marketing.facebook,marketing.pinterest,marketing.youtube,marketing.whatsapp,marketing.email_signup,marketing.popup_enabled,marketing.popup_delay,marketing.popup_title,marketing.popup_text,marketing.popup_button,marketing.popup_frequency,marketing.referral_enabled,marketing.referral_text,marketing.loyalty_enabled,marketing.loyalty_text,marketing.gift_card_enabled,marketing.gift_card_text,marketing.review_request_delay,marketing.social_proof'],
+  ['Operations & policies','ops.support_hours,ops.response_sla,ops.order_prefix,ops.invoice_prefix,ops.low_stock_email,ops.order_email,ops.return_window_days,ops.exchange_enabled,ops.return_enabled,ops.warranty_text,ops.care_instructions,ops.shipping_eta,ops.dispatch_eta,ops.privacy_contact,ops.legal_entity,ops.gst_number,ops.invoice_footer,ops.refund_policy,ops.cancellation_policy,ops.maintenance_message']
+];
+const customFields = customizationGroups.flatMap(([group,keys]) => keys.split(',').map((key,i)=>({group,key:'customization.'+key,label:key.split('.').slice(1).join(' ').replace(/_/g,' ').replace(/\b\w/g,c=>c.toUpperCase()),type:key.startsWith('theme.')&&['primary','accent','background','surface','text','muted','border','success','warning','danger'].some(k=>key.endsWith('.'+k))?'color':/\.(?:count|width|height|days|minutes|threshold|fee|rate|delay|spacing|font_size|limit|max|min|order)$/.test(key)?'number':key.endsWith('.enabled')||key.endsWith('.sticky')||key.endsWith('.transparent')||key.endsWith('.show_search')||key.endsWith('.show_account')||key.endsWith('.show_wishlist')||key.endsWith('.show_cart')||key.endsWith('.show_announcement')||key.endsWith('.show_categories')||key.endsWith('.show_bestsellers')||key.endsWith('.show_new_arrivals')||key.endsWith('.show_filters')||key.endsWith('.guest_enabled')||key.endsWith('.phone_required')||key.endsWith('.terms_required')||key.endsWith('.cod_enabled')||key.endsWith('.coupon_enabled')||key.endsWith('.drawer_enabled')||key.endsWith('.show_newsletter')||key.endsWith('.show_social')||key.endsWith('.show_payment_icons')||key.endsWith('.show_contact')||key.endsWith('.sitemap_enabled')||key.endsWith('.breadcrumbs_enabled')||key.endsWith('.popup_enabled')||key.endsWith('.referral_enabled')||key.endsWith('.loyalty_enabled')||key.endsWith('.gift_card_enabled')||key.endsWith('.return_enabled')||key.endsWith('.exchange_enabled')?'checkbox':'text'})));
+const customizationThemeDefaults = {
+  'customization.theme.primary':'#321720','customization.theme.accent':'#a77c45','customization.theme.background':'#f7f2eb',
+  'customization.theme.surface':'#fffdf9','customization.theme.text':'#42262e','customization.theme.muted':'#705860',
+  'customization.theme.border':'#ece6d9','customization.theme.success':'#1d6f4a','customization.theme.warning':'#a77c45',
+  'customization.theme.danger':'#a33b2a'
+};
+async function loadCustomizations(){
+  const data=await CH.api('/api/admin/settings');
+  const saved=data.settings||{};
+  const host=$('#customizationGroups');if(!host)return;
+  host.innerHTML=customizationGroups.map(([group])=>{
+    const fields=customFields.filter(f=>f.group===group);
+    return '<details class="admin-panel" open><summary style="font-weight:700;cursor:pointer">'+escapeAdminText(group)+' ('+fields.length+')</summary><div style="display:grid;grid-template-columns:repeat(auto-fit,minmax(210px,1fr));gap:10px;margin-top:14px">'+fields.map(f=>{
+      const value=saved[f.key]??customizationThemeDefaults[f.key]??'';
+      const rendered=f.type==='checkbox'?'<input type="checkbox" data-custom-key="'+f.key+'" '+(value===true?'checked':'')+' style="width:20px;height:20px">':'<input type="'+f.type+'" data-custom-key="'+f.key+'" value="'+escapeAdminText(value)+'" maxlength="500" style="width:100%">';
+      return '<label style="display:grid;gap:5px;font-size:12px;color:var(--soft-ink)">'+escapeAdminText(f.label)+rendered+'</label>';
+    }).join('')+'</div></details>';
+  }).join('');
+  $('#customizationCount').textContent=customFields.length+' editable controls';
+}
+$('#saveCustomizationsBtn')?.addEventListener('click',async()=>{
+  const values={};
+  $$('[data-custom-key]').forEach(el=>{values[el.dataset.customKey]=el.type==='checkbox'?el.checked:el.value.trim();});
+  try{const r=await CH.api('/api/admin/settings',{method:'PUT',body:values});CH.toast(r.saved+' customizations saved');await loadCustomizations();}
+  catch(err){CH.toast(err.message);}
+});
+
+/* ── secure image uploads ── */
+function readAsDataUrl(file){return new Promise((resolve,reject)=>{const reader=new FileReader();reader.onload=()=>resolve(reader.result);reader.onerror=()=>reject(new Error('Could not read selected image.'));reader.readAsDataURL(file);});}
+async function uploadImage(file){
+  if(!/^image\/(jpeg|png|webp|gif)$/.test(file.type)||file.size>8*1024*1024)throw new Error('Choose JPEG, PNG, WebP or GIF under 8 MB.');
+  const dataUrl=await readAsDataUrl(file);
+  return CH.api('/api/admin/media',{method:'POST',body:{dataUrl}});
+}
+async function loadMediaLibrary(){
+  const data=await CH.api('/api/admin/media');const host=$('#mediaPreviewGrid');if(!host)return;
+  host.innerHTML=(data.media||[]).map(item=>'<figure style="margin:0;padding:8px;border:1px solid var(--line);border-radius:8px"><img src="'+item.url+'" alt="Uploaded media" loading="lazy" style="width:100%;aspect-ratio:1;object-fit:cover"><small>'+Math.round(item.bytes/1024)+' KB</small><input readonly value="'+item.url+'" style="width:100%;margin-top:6px"></figure>').join('')||'<p>No uploaded images yet.</p>';
+}
+$('#uploadMediaBtn')?.addEventListener('click',async()=>{
+  const files=[...($('#mediaFiles')?.files||[])];if(!files.length){CH.toast('Choose image files first.');return;}
+  const status=$('#mediaUploadStatus');status.textContent='Uploading…';
+  try{for(const file of files)await uploadImage(file);
+    status.textContent=files.length+' image(s) uploaded.';$('#mediaFiles').value='';await loadMediaLibrary();
+  }catch(err){status.textContent=err.message;}
+});
+$('#pfUpload')?.addEventListener('change',async()=>{
+  const files=[...($('#pfUpload').files||[])];if(!files.length)return;
+  try{const urls=[];for(const file of files){const result=await uploadImage(file);urls.push(result.url);}
+    const field=$('#pfImages');field.value=[field.value.trim(),...urls].filter(Boolean).join('\n');CH.toast(urls.length+' image(s) uploaded and attached.');
+  }catch(err){CH.toast(err.message);}
+});
+
+/* ── database backup download and restore preparation ── */
+async function loadBackups(){
+  const data=await CH.api('/api/admin/backups');const tbody=$('#backupsTable tbody');if(!tbody)return;
+  tbody.innerHTML=(data.backups||[]).map(b=>'<tr><td>'+escapeAdminText(b.name)+'</td><td>'+new Date(b.createdAt).toLocaleString()+'</td><td>'+Math.round(b.bytes/1024)+' KB</td><td>'+(b.checksumPresent?'Verified':'Missing')+'</td><td><a href="/api/admin/backups/'+encodeURIComponent(b.name)+'">Database</a> · <a href="/api/admin/backups/'+encodeURIComponent(b.name)+'.sha256">Checksum</a>'+(b.mediaArchivePresent?' · <a href="/api/admin/backups/'+encodeURIComponent(b.name.replace(/\.sqlite$/,'.media.tar.gz'))+'">Media</a> · <a href="/api/admin/backups/'+encodeURIComponent(b.name.replace(/\.sqlite$/,'.media.tar.gz'))+'.sha256">Media checksum</a>':'')+'</td></tr>').join('')||'<tr><td colspan="5">No backups available yet.</td></tr>';
+}
+$('#createBackupBtn')?.addEventListener('click',async()=>{
+  const status=$('#backupStatus');status.textContent='Creating and verifying backup…';
+  try{const r=await CH.api('/api/admin/backups',{method:'POST',body:{}});status.textContent='Backup created: '+r.backup.name+' · SHA-256 '+r.backup.sha256;await loadBackups();}
+  catch(err){status.textContent=err.message;}
+});
+$('#refreshBackupsBtn')?.addEventListener('click',()=>loadBackups().catch(err=>$('#backupStatus').textContent=err.message));

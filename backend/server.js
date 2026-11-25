@@ -77,7 +77,8 @@ function parseBody(req) {
     let size = 0;
     req.on('data', (chunk) => {
       size += chunk.length;
-      if (size > 1_000_000) { req.bodyTooLarge = true; data = ''; return; } // 1 MB cap
+      const maxBody = String(req.url || '').startsWith('/api/admin/media') ? 11_500_000 : 1_000_000;
+      if (size > maxBody) { req.bodyTooLarge = true; data = ''; return; } // bounded JSON payload; media upload has a separate 11.5 MB ceiling
       data += chunk;
     });
     req.on('end', () => {
@@ -308,7 +309,7 @@ async function runAutomaticRoutePayouts(){
 async function route(req, res, pathname, query) {
   const method = req.method.toUpperCase();
   const body = (method === 'POST' || method === 'PATCH' || method === 'PUT') ? await parseBody(req) : null;
-  if (body?.__payloadTooLarge) return json(res, 413, { error: 'Request body exceeds the 1 MB limit.' });
+  if (body?.__payloadTooLarge) return json(res, 413, { error: pathname === '/api/admin/media' ? 'Image upload exceeds the 8 MB limit.' : 'Request body exceeds the 1 MB limit.' });
   if ((method === 'POST' || method === 'PATCH' || method === 'PUT') && body === null && !(pathname==='/api/seller/catalog/bulk' && String(req.headers['content-type']||'').includes('text/csv'))) return json(res, 400, { error: 'Malformed JSON request.' });
   const user = getUser(req);
 
@@ -327,6 +328,7 @@ async function route(req, res, pathname, query) {
     if (rateLimited('signup:' + clientIp(req), 5, 600000)) return json(res, 429, { error: 'Too many attempts. Try again later.' });
     const name = clean(body?.name, 80), email = clean(body?.email, 254).toLowerCase(), phone = clean(body?.phone, 20), password = String(body?.password || '');
     const ownerSetupKey = String(body?.ownerSetupKey || '');
+    const adminPanelSignup = body?.adminPanel === true;
     if (!name || !validEmail(email)) return json(res, 400, { error: 'Please provide a valid name and email.' });
     if (password.length < 16 || password.length > 128) return json(res, 400, { error: 'Password must be 16–128 characters.' });
 
@@ -336,6 +338,7 @@ async function route(req, res, pathname, query) {
       const accountCount = Number(db.prepare('SELECT COUNT(*) AS count FROM users').get().count);
       const isFirstAccount = accountCount === 0;
       if (isFirstAccount) {
+        if (!adminPanelSignup) return { error: 'The first store-owner account must be created from the private /admin setup page.', status: 403 };
         const expectedKey = String(process.env.OWNER_SETUP_KEY || '');
         if (expectedKey.length < 32 || !constantTimeEqual(ownerSetupKey, expectedKey)) {
           return { error: 'Owner setup is locked. Enter the private owner setup key supplied for this store.' , status: 403 };
@@ -409,13 +412,15 @@ async function route(req, res, pathname, query) {
         } catch (e) { console.error('Resend failed, falling back to demo link:', e.message); }
       }
     }
+    // Never return a reset token to a browser in production. Without an email provider, use the private Railway recovery script.
+    if (isProd) resetLink = null;
     // Always 200 — never reveal whether an email is registered
     return json(res, 200, { ok: true, resetLink });
   }
 
   if (pathname === '/api/auth/reset' && method === 'POST') {
     const token = String(body?.token || ''), password = String(body?.password || '');
-    if (password.length < 12 || password.length > 128) return json(res, 400, { error: 'Password must be 12–128 characters.' });
+    if (password.length < 16 || password.length > 128) return json(res, 400, { error: 'Password must be 16–128 characters.' });
     const row = db.prepare("SELECT * FROM password_resets WHERE token_hash = ? AND used = 0 AND expires_at > datetime('now')").get(sha256(token));
     if (!row) return json(res, 400, { error: 'This reset link is invalid or has expired.' });
     const salt = crypto.randomBytes(16).toString('hex');
@@ -1094,9 +1099,56 @@ async function route(req, res, pathname, query) {
   if (pathname==='/api/support/tickets' && method==='POST') { const email=clean(body?.email||user?.email,254).toLowerCase(),subject=clean(body?.subject,120),message=clean(body?.message,2000); if(!validEmail(email)||subject.length<3||message.length<10)return json(res,400,{error:'Enter a valid email, subject and message (10+ characters).'}); const r=db.prepare('INSERT INTO support_tickets(user_id,email,subject,message) VALUES(?,?,?,?)').run(user?.id||null,email,subject,message); return json(res,201,{ticketId:Number(r.lastInsertRowid),status:'open'}); }
   if (pathname==='/api/sellers/apply' && method==='POST') { if(!user)return json(res,401,{error:'Create an account before applying as a seller.'}); const name=clean(body?.name,100),slug=clean(body?.slug,80).toLowerCase().replace(/[^a-z0-9-]/g,'-'); if(name.length<2||slug.length<3)return json(res,400,{error:'Enter a seller name and unique store slug.'}); try{const r=db.prepare('INSERT INTO sellers(user_id,name,slug) VALUES(?,?,?)').run(user.id,name,slug);return json(res,201,{sellerId:Number(r.lastInsertRowid),status:'pending',message:'Application received. Admin approval required before listings go live.'});}catch{return json(res,409,{error:'That seller slug is already in use.'});} }
 
+  // Public, read-only storefront theme subset. Private admin settings never leave the server.
+  if (pathname === '/api/storefront/customizations' && method === 'GET') {
+    const allowed = ['customization.theme.primary','customization.theme.accent','customization.theme.background','customization.theme.surface','customization.theme.text','customization.theme.muted','customization.theme.radius','customization.store.announcement'];
+    const rows = db.prepare('SELECT key,value FROM store_settings WHERE key IN (' + allowed.map(()=>'?').join(',') + ')').all(...allowed);
+    const values = Object.fromEntries(rows.map(row => { try { return [row.key, JSON.parse(row.value)]; } catch { return [row.key, null]; } }));
+    return json(res, 200, { customizations: values });
+  }
+
+  // Admin entry discovery reveals only whether the first owner has been provisioned.
+  if (pathname === '/api/admin/access/status' && method === 'GET') {
+    const totalUsers = Number(db.prepare('SELECT COUNT(*) count FROM users').get().count);
+    const admins = Number(db.prepare("SELECT COUNT(*) count FROM users WHERE role='admin'").get().count);
+    return json(res, 200, { hasAdmin: admins > 0, canBootstrap: totalUsers === 0, setupAvailable: admins === 0 && totalUsers === 0 });
+  }
+
   /* ════════ ADMIN (RBAC: role = admin) ════════ */
   if (pathname.startsWith('/api/admin')) {
     if (!user || user.role !== 'admin') return json(res, 403, { error: 'Admin access only.' });
+
+    if (pathname === '/api/admin/media' && method === 'GET') {
+      const uploadDir = path.join(path.dirname(process.env.DATA_PATH || path.join(__dirname,'data','chandrahasa.db')), 'uploads');
+      fs.mkdirSync(uploadDir, { recursive: true, mode: 0o700 });
+      const media = fs.readdirSync(uploadDir).filter(name => /^[a-f0-9]{36}\.(?:jpg|png|webp|gif)$/.test(name)).map(name => {
+        const file = path.join(uploadDir,name), stat = fs.statSync(file);
+        return { name, url:'/uploads/'+name, bytes:stat.size, createdAt:stat.mtime.toISOString() };
+      }).sort((x,y)=>y.createdAt.localeCompare(x.createdAt));
+      return json(res,200,{media});
+    }
+    if (pathname === '/api/admin/media' && method === 'POST') {
+      if (rateLimited('media-upload:' + user.id, 60, 60 * 60 * 1000)) return json(res, 429, { error: 'Upload limit reached. Try again later.' });
+      const dataUrl = String(body?.dataUrl || '');
+      const match = dataUrl.match(/^data:(image\/(?:jpeg|png|webp|gif));base64,([A-Za-z0-9+/=]+)$/);
+      if (!match) return json(res, 400, { error: 'Upload a JPEG, PNG, WebP or GIF image. SVG and other file types are not accepted.' });
+      const buffer = Buffer.from(match[2], 'base64');
+      if (!buffer.length || buffer.length > 8 * 1024 * 1024) return json(res, 413, { error: 'Image must be 8 MB or smaller.' });
+      const mime = match[1];
+      const valid = mime === 'image/png' ? buffer.subarray(0,8).equals(Buffer.from([137,80,78,71,13,10,26,10]))
+        : mime === 'image/jpeg' ? buffer[0] === 0xff && buffer[1] === 0xd8 && buffer[buffer.length-2] === 0xff && buffer[buffer.length-1] === 0xd9
+        : mime === 'image/gif' ? ['GIF87a','GIF89a'].includes(buffer.subarray(0,6).toString('ascii'))
+        : buffer.subarray(0,4).toString('ascii') === 'RIFF' && buffer.subarray(8,12).toString('ascii') === 'WEBP';
+      if (!valid) return json(res, 400, { error: 'Image file signature does not match its declared type.' });
+      const uploadDir = path.join(path.dirname(process.env.DATA_PATH || path.join(__dirname,'data','chandrahasa.db')), 'uploads');
+      fs.mkdirSync(uploadDir, { recursive: true, mode: 0o700 });
+      const ext = ({'image/jpeg':'jpg','image/png':'png','image/webp':'webp','image/gif':'gif'})[mime];
+      const filename = crypto.randomBytes(18).toString('hex') + '.' + ext;
+      const target = path.join(uploadDir, filename);
+      fs.writeFileSync(target, buffer, { flag: 'wx', mode: 0o640 });
+      auditLog(user.id, 'media_upload', 'media', filename, { mime, bytes: buffer.length });
+      return json(res, 201, { ok: true, url: '/uploads/' + filename, mime, bytes: buffer.length });
+    }
 
     if(pathname==='/api/admin/support/chat' && method==='GET') return json(res,200,{threads:db.prepare('SELECT t.*,u.name,u.email,(SELECT message FROM chat_messages m WHERE m.thread_id=t.id ORDER BY m.id DESC LIMIT 1) AS last_message FROM chat_threads t JOIN users u ON u.id=t.user_id ORDER BY t.updated_at DESC LIMIT 200').all()});
     if(pathname==='/api/admin/support/chat/reply' && method==='POST'){const id=toInt(body?.threadId),message=clean(body?.message,2000);if(message.length<1)return json(res,400,{error:'Reply message is required.'});const t=db.prepare('SELECT id FROM chat_threads WHERE id=?').get(id);if(!t)return json(res,404,{error:'Chat thread not found.'});const r=db.prepare("INSERT INTO chat_messages(thread_id,sender_type,sender_id,message) VALUES(?,'agent',?,?)").run(id,user.id,message);db.prepare("UPDATE chat_threads SET updated_at=datetime('now') WHERE id=?").run(id);wsBroadcast(id,{type:'message',threadId:id,message:{id:Number(r.lastInsertRowid),sender_type:'agent',message,created_at:new Date().toISOString()}});return json(res,201,{messageId:Number(r.lastInsertRowid)});}
@@ -1182,6 +1234,20 @@ async function route(req, res, pathname, query) {
     if(pathname==='/api/admin/seller-products' && method==='GET') return json(res,200,{products:db.prepare('SELECT sp.*,s.name AS seller_name,p.name AS product_name FROM seller_products sp JOIN sellers s ON s.id=sp.seller_id JOIN products p ON p.id=sp.product_id ORDER BY sp.id DESC').all()});
     if(pathname==='/api/admin/seller-products/status' && method==='POST'){const status=clean(body?.status,20);if(!['active','rejected','paused'].includes(status))return json(res,400,{error:'Invalid listing status.'});const id=toInt(body?.id);const r=db.prepare('UPDATE seller_products SET status=? WHERE id=?').run(status,id);if(r.changes&&status==='active'){const x=db.prepare('SELECT seller_id,product_id FROM seller_products WHERE id=?').get(id);db.prepare('INSERT INTO product_sellers(product_id,seller_id) VALUES(?,?) ON CONFLICT(product_id) DO UPDATE SET seller_id=excluded.seller_id').run(x.product_id,x.seller_id);db.prepare('UPDATE products SET is_active=1 WHERE id=?').run(x.product_id);}return json(res,200,{ok:true});}
     if(pathname==='/api/admin/gift-cards' && method==='POST'){const amount=toInt(body?.amount);if(amount<100||amount>100000)return json(res,400,{error:'Gift card value must be ₹100–₹100,000.'});const code='CH-'+crypto.randomBytes(8).toString('hex').toUpperCase();db.prepare('INSERT INTO gift_cards(code,balance,initial_value,expires_at) VALUES(?,?,?,?)').run(code,amount,amount,body?.expiresAt||null);auditLog(user.id,'create','gift_card',code,{amount});return json(res,201,{code,balance:amount});}
+    const backupDownload = pathname.match(/^\/api\/admin\/backups\/(chandrahasa-[A-Za-z0-9T.-]+\.(?:sqlite|media\.tar\.gz))(\.sha256)?$/);
+    if (backupDownload && method === 'GET') {
+      const name = backupDownload[1], checksumOnly = !!backupDownload[2];
+      const dir = process.env.BACKUP_DIR || path.join(path.dirname(process.env.DATA_PATH || path.join(__dirname,'data','chandrahasa.db')), 'backups');
+      const file = path.join(dir, name), checksum = file + '.sha256';
+      if (!fs.existsSync(file) || !fs.existsSync(checksum)) return json(res, 404, { error: 'Backup not found or checksum missing.' });
+      const expected = fs.readFileSync(checksum,'utf8').trim().split(/\s+/)[0];
+      const actual = crypto.createHash('sha256').update(fs.readFileSync(file)).digest('hex');
+      if (!/^[a-f0-9]{64}$/i.test(expected) || !constantTimeEqual(expected,actual)) return json(res, 409, { error: 'Backup checksum verification failed.' });
+      auditLog(user.id, 'backup_download', 'database', name, { sha256: actual, checksumOnly });
+      const downloadFile = checksumOnly ? checksum : file;
+      res.writeHead(200, { 'Content-Type':checksumOnly?'text/plain; charset=utf-8':name.endsWith('.sqlite')?'application/vnd.sqlite3':'application/gzip', 'Content-Length':fs.statSync(downloadFile).size, 'Content-Disposition':'attachment; filename="'+path.basename(downloadFile)+'"', 'Cache-Control':'no-store', 'X-Content-Type-Options':'nosniff' });
+      return fs.createReadStream(downloadFile).pipe(res);
+    }
     if (pathname === '/api/admin/backups' && method === 'GET') {
       const dir = process.env.BACKUP_DIR || path.join(path.dirname(process.env.DATA_PATH || path.join(__dirname, 'data', 'chandrahasa.db')), 'backups');
       fs.mkdirSync(dir, { recursive: true, mode: 0o700 });
@@ -1189,7 +1255,7 @@ async function route(req, res, pathname, query) {
         const file = path.join(dir, name), stat = fs.statSync(file);
         return { name, bytes: stat.size, createdAt: stat.mtime.toISOString(), checksumPresent: fs.existsSync(`${file}.sha256`) };
       }).sort((a,b) => b.createdAt.localeCompare(a.createdAt));
-      return json(res, 200, { backups, retentionDays: Math.max(7, Math.min(90, Number(process.env.BACKUP_KEEP_DAYS || 30))) });
+      return json(res, 200, { backups: backups.map(b => ({ ...b, mediaArchivePresent: fs.existsSync(path.join(dir,b.name.replace(/\.sqlite$/,'.media.tar.gz'))) })), retentionDays: Math.max(7, Math.min(90, Number(process.env.BACKUP_KEEP_DAYS || 30))) });
     }
     if (pathname === '/api/admin/backups' && method === 'POST') {
       if (!rateLimited(`backup:${user.id}`, 3, 60 * 60 * 1000)) {
@@ -1476,15 +1542,18 @@ async function route(req, res, pathname, query) {
       return json(res, 200, { settings });
     }
     if (pathname === '/api/admin/settings' && method === 'PUT') {
-      const allowed = ['store_name','support_email','support_phone','free_shipping_threshold','shipping_fee','announcement','social_links','policies'];
+      const fixed = new Set(['store_name','support_email','support_phone','free_shipping_threshold','shipping_fee','announcement','social_links','policies']);
+      const entries = Object.entries(body || {});
+      if (entries.length > 250) return json(res, 400, { error: 'A maximum of 250 settings can be changed at once.' });
+      for (const [key,value] of entries) {
+        if (!fixed.has(key) && !/^customization\.[a-z0-9_.-]{1,100}$/.test(key)) return json(res, 400, { error: 'Unsupported setting key: ' + clean(key,120) });
+        if (Buffer.byteLength(JSON.stringify(value)) > 4000) return json(res, 400, { error: 'A setting value is too large.' });
+      }
       const tx = db.transaction(() => {
-        for (const key of allowed) if (Object.prototype.hasOwnProperty.call(body || {}, key)) {
-          db.prepare("INSERT INTO store_settings (key,value) VALUES (?,?) ON CONFLICT(key) DO UPDATE SET value=excluded.value, updated_at=datetime('now')")
-            .run(key, JSON.stringify(body[key]));
-        }
+        for (const [key,value] of entries) db.prepare("INSERT INTO store_settings (key,value) VALUES (?,?) ON CONFLICT(key) DO UPDATE SET value=excluded.value, updated_at=datetime('now')").run(key, JSON.stringify(value));
       });
-      tx(); auditLog(user.id, 'update', 'settings', 'store', body || {});
-      return json(res, 200, { ok: true });
+      tx(); auditLog(user.id, 'update', 'settings', 'store', { keys: entries.map(([k])=>k), count: entries.length });
+      return json(res, 200, { ok: true, saved: entries.length });
     }
 
     // Customer support and marketing inboxes.
@@ -1532,6 +1601,17 @@ async function route(req, res, pathname, query) {
 
 /* ═══════════════ STATIC + SECURITY HEADERS ═══════════════ */
 function serveStatic(req, res, pathname) {
+  if (pathname.startsWith('/uploads/')) {
+    const name = pathname.slice('/uploads/'.length);
+    if (!/^[a-f0-9]{36}\.(?:jpg|png|webp|gif)$/.test(name)) { res.writeHead(404); return res.end('Not found'); }
+    const dir = path.join(path.dirname(process.env.DATA_PATH || path.join(__dirname,'data','chandrahasa.db')), 'uploads');
+    const file = path.join(dir, name);
+    if (!fs.existsSync(file) || !fs.statSync(file).isFile()) { res.writeHead(404); return res.end('Not found'); }
+    const ext = path.extname(file).toLowerCase();
+    const mime = {'.jpg':'image/jpeg','.png':'image/png','.webp':'image/webp','.gif':'image/gif'}[ext];
+    res.writeHead(200, { 'Content-Type':mime, 'Content-Length':fs.statSync(file).size, 'Cache-Control':'public, max-age=31536000, immutable', 'X-Content-Type-Options':'nosniff', 'Content-Security-Policy':"default-src 'none'; sandbox", 'Cross-Origin-Resource-Policy':'same-origin' });
+    return fs.createReadStream(file).pipe(res);
+  }
   let rel;
   try { rel = decodeURIComponent(pathname); } catch { res.writeHead(400, { 'Content-Type': 'text/plain; charset=utf-8' }); return res.end('Bad request'); }
   if (rel === '/') rel = '/index.html';
