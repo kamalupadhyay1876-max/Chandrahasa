@@ -97,6 +97,7 @@ check('Contact page contains no sample WhatsApp number or placeholder owner bloc
 check('Shared header has no announcement banner and includes Explore and Contact',()=>{const s=read(path.join(front,'js','layout.js'));if(s.includes('class="announce"')||s.includes('announceTrack'))throw Error('announcement banner markup/runtime remains');for(const x of ['/explore','/contact'])if(!s.includes(x))throw Error(x+' navigation missing');});
 check('Cart renders only the product image saved with the cart item',()=>{const s=read(path.join(front,'js','store.js')),p=read(path.join(front,'js','feature-pages.js'));if(s.includes("i.image || '/assets/img/rings.webp'")||s.includes("t.dataset.fb || '/assets/img/rings.webp'"))throw Error('generic cart image fallback remains');if(!s.includes('cart-image-empty')||!p.includes('cart-page-image')||!p.includes('i.image'))throw Error('cart media display missing');});
 check('Premium header/footer polish and motion layer remain accessible',()=>{const s=read(path.join(front,'css','experience.css'));for(const x of ['.nav-inner','.brand-name','.footer-grid','.cart-page-item','prefers-reduced-motion'])if(!s.includes(x))throw Error('premium polish token missing: '+x);});
-\nprocess.exitCode=fail?1:0;
+
+process.exitCode=fail?1:0;
 
 console.log(`\nAudit checks: ${pass} passed, ${fail} failed. Source checks are not live provider verification or a security certification.`);
