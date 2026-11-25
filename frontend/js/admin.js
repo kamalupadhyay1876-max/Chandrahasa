@@ -162,9 +162,10 @@ $('#productsTable')?.addEventListener('click', async (e) => {
     if (!p) return;
     await loadCategories();
     $('#pfId').value = p.id;
-    $('#pfName').value = p.name; $('#pfCategory').value = p.category_slug; $('#pfBadge').value = p.badge || '';
+    $('#pfName').value = p.name; $('#pfSlug').value = p.slug || ''; $('#pfCategory').value = p.category_slug; $('#pfBadge').value = p.badge || '';
     $('#pfPrice').value = p.price; $('#pfCompare').value = p.compare_price || ''; $('#pfStock').value = p.stock;
-    $('#pfHuid').value = p.huid || ''; $('#pfWeight').value = p.weight || ''; $('#pfArtisan').value = p.artisan || '';
+    $('#pfHuid').value = p.huid || ''; $('#pfWeight').value = p.weight || ''; $('#pfPurity').value = p.purity || ''; $('#pfArtisan').value = p.artisan || '';
+    $('#pfImages').value = (p.images || []).join('\n'); $('#pfStory').value = p.artisan_story || ''; $('#pfActive').checked = !!p.is_active;
     $('#pfDesc').value = p.description || '';
     $('#productModalTitle').textContent = 'Edit — ' + p.name;
     $('#productModal').classList.add('open');
@@ -178,7 +179,7 @@ $('#productsTable')?.addEventListener('click', async (e) => {
 });
 $('#addProductBtn')?.addEventListener('click', async () => {
   await loadCategories();
-  $('#productForm').reset(); $('#pfId').value = ''; $('#productModalTitle').textContent = 'Add a new piece';
+  $('#productForm').reset(); $('#pfId').value = ''; $('#pfSlug').value = ''; $('#pfPurity').value = ''; $('#pfImages').value = ''; $('#pfStory').value = ''; $('#pfActive').checked = true; $('#productModalTitle').textContent = 'Add a new piece';
   if (!allCategories.length) { CH.toast('Create a category first in the Categories section.'); return; }
   $('#productModal').classList.add('open');
 });
@@ -189,10 +190,10 @@ $('#productForm')?.addEventListener('submit', async (e) => {
   e.preventDefault();
   const id = $('#pfId').value;
   const payload = {
-    name: $('#pfName').value.trim(), category_slug: $('#pfCategory').value, badge: $('#pfBadge').value.trim(),
+    name: $('#pfName').value.trim(), slug: $('#pfSlug').value.trim(), category_slug: $('#pfCategory').value, badge: $('#pfBadge').value.trim(),
     price: Number($('#pfPrice').value), compare_price: Number($('#pfCompare').value) || null,
     stock: Number($('#pfStock').value), huid: $('#pfHuid').value.trim(), weight: $('#pfWeight').value.trim(),
-    artisan: $('#pfArtisan').value.trim(), description: $('#pfDesc').value.trim(),
+    artisan: $('#pfArtisan').value.trim(), purity: $('#pfPurity').value.trim(), images: $('#pfImages').value.split(/\r?\n/).map(x=>x.trim()).filter(Boolean), artisan_story: $('#pfStory').value.trim(), is_active: $('#pfActive').checked, description: $('#pfDesc').value.trim(),
   };
   try {
     if (id) await CH.api('/api/admin/products/' + id, { method: 'PUT', body: payload });
