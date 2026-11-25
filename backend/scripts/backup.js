@@ -3,6 +3,9 @@
 const fs = require('fs');
 const path = require('path');
 const crypto = require('crypto');
+const { execFile } = require('child_process');
+const { promisify } = require('util');
+const execFileAsync = promisify(execFile);
 const Database = require('better-sqlite3');
 const DATA_PATH = process.env.DATA_PATH || path.join(__dirname, '..', 'data', 'chandrahasa.db');
 const BACKUP_DIR = process.env.BACKUP_DIR || path.join(path.dirname(DATA_PATH), 'backups');
@@ -31,10 +34,12 @@ async function createBackup() {
   for (const name of fs.readdirSync(BACKUP_DIR).filter(n => /^chandrahasa-.*\.sqlite$/.test(n))) {
     const file = path.join(BACKUP_DIR, name);
     if (file !== target && Date.now() - fs.statSync(file).mtimeMs > KEEP * 86400000) {
+      const mediaPath = file.replace(/\\.sqlite$/, '.media.tar.gz');
       fs.rmSync(file, { force: true }); fs.rmSync(`${file}.sha256`, { force: true });
+      fs.rmSync(mediaPath, { force: true }); fs.rmSync(`${mediaPath}.sha256`, { force: true });
     }
   }
-  return { file: target, bytes: stat.size, sha256: digest, integrity: 'ok' };
+  return { file: target, bytes: stat.size, sha256: digest, integrity: 'ok', mediaArchive };
 }
 
 if (require.main === module) createBackup().then(x => { console.log(JSON.stringify(x, null, 2)); }).catch(e => { console.error(e.message); process.exitCode = 1; });
