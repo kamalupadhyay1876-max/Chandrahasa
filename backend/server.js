@@ -412,6 +412,8 @@ async function route(req, res, pathname, query) {
         } catch (e) { console.error('Resend failed, falling back to demo link:', e.message); }
       }
     }
+    // Never return a reset token to a browser in production. Without an email provider, use the private Railway recovery script.
+    if (isProd) resetLink = null;
     // Always 200 — never reveal whether an email is registered
     return json(res, 200, { ok: true, resetLink });
   }
@@ -1223,19 +1225,19 @@ async function route(req, res, pathname, query) {
     if(pathname==='/api/admin/seller-products' && method==='GET') return json(res,200,{products:db.prepare('SELECT sp.*,s.name AS seller_name,p.name AS product_name FROM seller_products sp JOIN sellers s ON s.id=sp.seller_id JOIN products p ON p.id=sp.product_id ORDER BY sp.id DESC').all()});
     if(pathname==='/api/admin/seller-products/status' && method==='POST'){const status=clean(body?.status,20);if(!['active','rejected','paused'].includes(status))return json(res,400,{error:'Invalid listing status.'});const id=toInt(body?.id);const r=db.prepare('UPDATE seller_products SET status=? WHERE id=?').run(status,id);if(r.changes&&status==='active'){const x=db.prepare('SELECT seller_id,product_id FROM seller_products WHERE id=?').get(id);db.prepare('INSERT INTO product_sellers(product_id,seller_id) VALUES(?,?) ON CONFLICT(product_id) DO UPDATE SET seller_id=excluded.seller_id').run(x.product_id,x.seller_id);db.prepare('UPDATE products SET is_active=1 WHERE id=?').run(x.product_id);}return json(res,200,{ok:true});}
     if(pathname==='/api/admin/gift-cards' && method==='POST'){const amount=toInt(body?.amount);if(amount<100||amount>100000)return json(res,400,{error:'Gift card value must be ₹100–₹100,000.'});const code='CH-'+crypto.randomBytes(8).toString('hex').toUpperCase();db.prepare('INSERT INTO gift_cards(code,balance,initial_value,expires_at) VALUES(?,?,?,?)').run(code,amount,amount,body?.expiresAt||null);auditLog(user.id,'create','gift_card',code,{amount});return json(res,201,{code,balance:amount});}
-    const backupDownload = pathname.match(/^\/api\/admin\/backups\/([A-Za-z0-9._-]+)$/);
+    const backupDownload = pathname.match(/^\/api\/admin\/backups\/(chandrahasa-[A-Za-z0-9T.-]+\.(?:sqlite|media\.tar\.gz))(\.sha256)?$/);
     if (backupDownload && method === 'GET') {
-      const name = backupDownload[1];
-      if (!/^chandrahasa-[A-Za-z0-9T.-]+\.sqlite$/.test(name)) return json(res, 400, { error: 'Invalid backup name.' });
+      const name = backupDownload[1], checksumOnly = !!backupDownload[2];
       const dir = process.env.BACKUP_DIR || path.join(path.dirname(process.env.DATA_PATH || path.join(__dirname,'data','chandrahasa.db')), 'backups');
       const file = path.join(dir, name), checksum = file + '.sha256';
       if (!fs.existsSync(file) || !fs.existsSync(checksum)) return json(res, 404, { error: 'Backup not found or checksum missing.' });
       const expected = fs.readFileSync(checksum,'utf8').trim().split(/\s+/)[0];
       const actual = crypto.createHash('sha256').update(fs.readFileSync(file)).digest('hex');
       if (!/^[a-f0-9]{64}$/i.test(expected) || !constantTimeEqual(expected,actual)) return json(res, 409, { error: 'Backup checksum verification failed.' });
-      auditLog(user.id, 'backup_download', 'database', name, { sha256: actual });
-      res.writeHead(200, { 'Content-Type':'application/vnd.sqlite3', 'Content-Length':fs.statSync(file).size, 'Content-Disposition':'attachment; filename="'+name+'"', 'Cache-Control':'no-store', 'X-Content-Type-Options':'nosniff' });
-      return fs.createReadStream(file).pipe(res);
+      auditLog(user.id, 'backup_download', 'database', name, { sha256: actual, checksumOnly });
+      const downloadFile = checksumOnly ? checksum : file;
+      res.writeHead(200, { 'Content-Type':checksumOnly?'text/plain; charset=utf-8':name.endsWith('.sqlite')?'application/vnd.sqlite3':'application/gzip', 'Content-Length':fs.statSync(downloadFile).size, 'Content-Disposition':'attachment; filename="'+path.basename(downloadFile)+'"', 'Cache-Control':'no-store', 'X-Content-Type-Options':'nosniff' });
+      return fs.createReadStream(downloadFile).pipe(res);
     }
     if (pathname === '/api/admin/backups' && method === 'GET') {
       const dir = process.env.BACKUP_DIR || path.join(path.dirname(process.env.DATA_PATH || path.join(__dirname, 'data', 'chandrahasa.db')), 'backups');
@@ -1244,7 +1246,7 @@ async function route(req, res, pathname, query) {
         const file = path.join(dir, name), stat = fs.statSync(file);
         return { name, bytes: stat.size, createdAt: stat.mtime.toISOString(), checksumPresent: fs.existsSync(`${file}.sha256`) };
       }).sort((a,b) => b.createdAt.localeCompare(a.createdAt));
-      return json(res, 200, { backups, retentionDays: Math.max(7, Math.min(90, Number(process.env.BACKUP_KEEP_DAYS || 30))) });
+      return json(res, 200, { backups: backups.map(b => ({ ...b, mediaArchivePresent: fs.existsSync(path.join(dir,b.name.replace(/\.sqlite$/,'.media.tar.gz'))) })), retentionDays: Math.max(7, Math.min(90, Number(process.env.BACKUP_KEEP_DAYS || 30))) });
     }
     if (pathname === '/api/admin/backups' && method === 'POST') {
       if (!rateLimited(`backup:${user.id}`, 3, 60 * 60 * 1000)) {
