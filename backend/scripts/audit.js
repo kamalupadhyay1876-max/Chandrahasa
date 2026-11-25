@@ -110,9 +110,7 @@ check('Gold luxury theme tokens are applied consistently',()=>{const s=read(path
 check('Product image allowlist rejects cross-origin sources and permits first-party assets',()=>{const s=read(path.join(front,'js','store.js'));if(!s.includes('url.origin !== window.location.origin')||!s.includes('uploads')||!s.includes('assets'))throw Error('first-party image origin/path validation missing');});
 check('Grid add-to-cart inherits and sanitizes the product card image when button metadata is absent',()=>{const s=read(path.join(front,'js','store.js'));if(!s.includes("productCard?.querySelector('.pc-media img')")||!s.includes('cardImage?.currentSrc')||!s.includes('image: CH.safeImageUrl(productImage)'))throw Error('product card image fallback or sanitizer missing');});
 
-process.exitCode=fail?1:0;
 
-console.log(`\nAudit checks: ${pass} passed, ${fail} failed. Source checks are not live provider verification or a security certification.`);
 
 check('Auth forms explicitly run browser validity checks despite novalidate markup',()=>{const s=read(path.join(front,'js','auth.js'));for(const marker of ['form.reportValidity()','forgotForm.reportValidity()','resetForm.reportValidity()'])if(!s.includes(marker))throw Error('missing '+marker);});
 check('Password reset UI matches the 16-character server policy',()=>{const h=read(path.join(front,'reset-password.html')),s=read(path.join(root,'server.js'));if(!h.includes('minlength=\"16\"')||!s.includes('Password must be 16–128 characters.'))throw Error('password policy mismatch');});
@@ -125,13 +123,17 @@ check('Admin sidebar is hidden until authenticated owner boot',()=>{const h=read
 check('Admin operations and marketplace controls stay hidden until an admin session is confirmed',()=>{const o=read(path.join(front,'admin-operations.html')),m=read(path.join(front,'admin-marketplace.html')),g=read(path.join(front,'js','admin-route-guard.js'));if(!o.includes('main class="ops" hidden')||!m.includes('main class="ops" hidden')||!g.includes("me.user.role!=='admin'"))throw Error('admin operations visibility gate missing');});
 
 check('Public category API normalizes legacy slugs and merges only populated categories',()=>{const s=read(path.join(root,'server.js'));if(!s.includes('function storefrontCategory')||!s.includes('const grouped = new Map()')||!s.includes('if (!count) continue'))throw Error('storefront category normalization missing');});
-check('Product category filters resolve canonical storefront slugs to stored category slugs',()=>{const s=read(path.join(root,'server.js'));if(!s.includes('const normalized = storefrontCategory(category, category).slug')||!s.includes('category_slug IN'))throw Error('category filter alias resolution missing');});
+check('Product category filters resolve canonical storefront slugs to stored category slugs',()=>{const s=read(path.join(root,'server.js'));if(!s.includes('const canonicalFilter = storefrontCategory(category, category)')||!s.includes('const normalized = canonicalFilter.slug')||!s.includes('category_slug IN'))throw Error('category filter alias resolution missing');});
 
 check('Purity radio filters are URL-driven and applied by the product API',()=>{const ui=read(path.join(front,'js','shop.js')),h=read(path.join(front,'shop.html')),api=read(path.join(root,'server.js'));if(!ui.includes('state.purity')||!ui.includes("q.set('purity', state.purity)")||!ui.includes('document.querySelectorAll')||!ui.includes('input[name=')||!h.includes('name="purity" value="925"')||!api.includes('if (purity)'))throw Error('purity filter is not connected end to end');});
 
-check('Category normalization does not classify unrelated words containing ring as jewellery categories',()=>{const s=read(path.join(root,'server.js'));if(!s.includes("ring(?:demo|my|[0-9])")||!s.includes("rings?(?:$|[^a-z])"))throw Error('category matcher is too broad');});
+check('Category normalization excludes demo slugs and avoids unrelated ring matches',()=>{const s=read(path.join(root,'server.js'));if(!s.includes('if (/(demo|test|sample)/.test(key)) return null;')||!s.includes('ring(?:my|[0-9])')||!s.includes('rings?(?:$|[^a-z])'))throw Error('category matcher or demo exclusion missing');});
 
 check('Product cards expose a working compare action and the compare page persists selected IDs',()=>{const c=read(path.join(front,'js','cards.js')),st=read(path.join(front,'js','store.js')),f=read(path.join(front,'js','feature-pages.js'));if(!c.includes('data-compare-product')||!st.includes("localStorage.getItem('ch_compare_ids')")||!f.includes("localStorage.setItem('ch_compare_ids'"))throw Error('product compare workflow is not connected');});
 
 check('Online payment only enables with gateway and webhook configuration',()=>{const s=read(path.join(root,'server.js')),c=read(path.join(front,'js','checkout.js')),h=read(path.join(front,'checkout.html'));if(!s.includes("'/api/payments/config'")||!s.includes('RAZORPAY_WEBHOOK_SECRET')||!c.includes("CH.api('/api/payments/config')")||!c.includes('checkout.razorpay.com/v1/checkout.js')||!h.includes('Checking gateway availability'))throw Error('Razorpay readiness and loader flow missing');});
 check('CSP allowlists only the Razorpay checkout resources required by the payment loader',()=>{const s=read(path.join(root,'server.js'));if(!s.includes('https://checkout.razorpay.com')||!s.includes('https://api.razorpay.com')||!s.includes('frame-src'))throw Error('Razorpay CSP allowlist missing');});
+
+
+process.exitCode=fail?1:0;
+console.log(`\nAudit checks: ${pass} passed, ${fail} failed. Source checks are not live provider verification or a security certification.`);
