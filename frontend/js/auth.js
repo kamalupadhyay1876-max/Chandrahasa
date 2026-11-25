@@ -34,9 +34,10 @@ bindForm('#signupForm', '#signupBtn', async () => {
   const name = $('#suName').value.trim(), email = $('#suEmail').value.trim(), phone = $('#suPhone').value.trim();
   const password = $('#suPassword').value, confirm = $('#suPassword2').value;
   if (password !== confirm) throw new Error('The two passwords do not match.');
-  if (password.length < 8) throw new Error('Password must be at least 8 characters.');
+  if (password.length < 16) throw new Error('Password must be at least 16 characters.');
   if (!/^\+?[0-9\s-]{10,15}$/.test(phone)) throw new Error('Enter a valid phone number (10–15 digits).');
-  await CH.api('/api/auth/signup', { body: { name, email, phone, password } });
+  const ownerSetupKey = $('#suOwnerKey')?.value.trim() || '';
+  await CH.api('/api/auth/signup', { body: { name, email, phone, password, ownerSetupKey } });
 });
 
 /* LOG IN */
