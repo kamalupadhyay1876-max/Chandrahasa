@@ -26,7 +26,8 @@ async function loadSummary() {
   } else {
     const safe = value => String(value ?? '').replace(/[&<>"']/g, ch => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[ch]));
     wrap.innerHTML = state.items.map(i => {
-      const image = typeof i.image === 'string' && (/^\/(?:uploads|assets)\/[A-Za-z0-9_-]+(?:\/[A-Za-z0-9_.-]+)*$/.test(i.image) || /^https?:\/\/[^"'<>\\s]+$/i.test(i.image)) ? i.image : '';
+      const remoteImage = typeof i.image === 'string' && /^https?:\/\//i.test(i.image) && !/[ \t\r\n"'<>\\\\]/.test(i.image);
+      const image = typeof i.image === 'string' && (/^\/(?:uploads|assets)\/[A-Za-z0-9_-]+(?:\/[A-Za-z0-9_.-]+)*$/.test(i.image) || remoteImage) ? i.image : '';
       const media = image ? `<img src="${safe(image)}" alt="${safe(i.name)}" loading="lazy">` : '<div class="summary-image-empty" aria-label="No product image available">CH</div>';
       return `<div class="summary-line">${media}
         <div style="flex:1"><b style="font-size:13px;color:var(--charcoal);display:block">${safe(i.name)}</b>

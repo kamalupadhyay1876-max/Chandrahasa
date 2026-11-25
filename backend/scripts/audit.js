@@ -103,6 +103,8 @@ check('Checkout distinguishes cart-load failure from a genuinely empty bag',()=>
 check('Checkout summary uses the selected product image or neutral placeholder',()=>{const s=read(path.join(front,'js','checkout.js'));if(s.includes("i.image || '/assets/img/rings.webp'")||s.includes("data-fb=\"/assets/img/rings.webp\""))throw Error('generic checkout image fallback remains');if(!s.includes('summary-image-empty')||!s.includes('i.image'))throw Error('product-specific checkout image missing');});
 check('Cart line content is HTML escaped and same-origin assets are allowed',()=>{const s=read(path.join(front,'js','store.js'));if(!s.includes('${safeAttr(i.name)}')||!s.includes('(?:uploads|assets)'))throw Error('cart output escaping or asset allowlist missing');});
 check('Gold luxury theme tokens are applied consistently',()=>{const s=read(path.join(front,'css','premium-upgrade.css'));for(const token of ['--gold:#c5a15a','--gold-deep:#89672d','--cream:#f8f4eb','summary-image-empty'])if(!s.includes(token))throw Error('gold theme token missing: '+token);});
+check('Remote HTTPS product images are accepted without rejecting letter s',()=>{const s=read(path.join(front,'js','store.js')),c=read(path.join(front,'js','checkout.js'));if(!s.includes('remoteImage')||!c.includes('remoteImage')||s.includes("[^\\\"'<>\\\\s]+$"))throw Error('remote image validation is malformed');});
+check('Grid add-to-cart inherits the product card image when button metadata is absent',()=>{const s=read(path.join(front,'js','store.js'));if(!s.includes("productCard?.querySelector('.pc-media img')")||!s.includes('cardImage?.currentSrc')||!s.includes('image: productImage'))throw Error('product card image fallback missing');});
 
 process.exitCode=fail?1:0;
 

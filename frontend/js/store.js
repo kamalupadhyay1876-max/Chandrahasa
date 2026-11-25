@@ -121,7 +121,8 @@ function renderShipBar(subtotal) {
 
 function cartLineHTML(i) {
   const safeAttr = value => String(value ?? '').replace(/[&<>"']/g, ch => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[ch]));
-  const image = typeof i.image === 'string' && (/^\/(?:uploads|assets)\/[A-Za-z0-9_-]+(?:\/[A-Za-z0-9_.-]+)*$/.test(i.image) || /^https?:\/\/[^"'<>\\s]+$/i.test(i.image)) ? i.image : '';
+  const remoteImage = typeof i.image === 'string' && /^https?:\/\//i.test(i.image) && !/[ \t\r\n"'<>\\\\]/.test(i.image);
+  const image = typeof i.image === 'string' && (/^\/(?:uploads|assets)\/[A-Za-z0-9_-]+(?:\/[A-Za-z0-9_.-]+)*$/.test(i.image) || remoteImage) ? i.image : '';
   const compare = i.compare_price && i.compare_price > i.price ? `<span class="pc-compare">${CH.money(i.compare_price)}</span>` : '';
   return `<div class="cart-line" data-line="${i.productId}" data-size="${i.size || ''}">
     ${image ? `<img src="${safeAttr(image)}" alt="${safeAttr(i.name)}" loading="lazy">` : '<div class="cart-image-empty" aria-label="No product image available">CH</div>'}
@@ -206,13 +207,16 @@ document.addEventListener('DOMContentLoaded', async () => {
     const btn = e.target.closest('[data-add-to-cart]');
     if (!btn) return;
     e.preventDefault(); e.stopPropagation();
+    const productCard = btn.closest('.product-card');
+    const cardImage = productCard?.querySelector('.pc-media img');
+    const productImage = btn.dataset.image || cardImage?.currentSrc || cardImage?.getAttribute('src') || '';
     const payload = {
       productId: Number(btn.dataset.addToCart),
       qty: 1,
       size: btn.dataset.size || '',
-      name: btn.dataset.name || 'Chandrahasa Piece',
+      name: btn.dataset.name || productCard?.querySelector('.pc-name')?.textContent?.trim() || 'Chandrahasa Piece',
       price: Number(btn.dataset.price || 0),
-      image: btn.dataset.image || '',
+      image: productImage,
       huid: btn.dataset.huid || '',
       stock: Number(btn.dataset.stock || 99),
     };
