@@ -1118,6 +1118,15 @@ async function route(req, res, pathname, query) {
   if (pathname.startsWith('/api/admin')) {
     if (!user || user.role !== 'admin') return json(res, 403, { error: 'Admin access only.' });
 
+    if (pathname === '/api/admin/media' && method === 'GET') {
+      const uploadDir = path.join(path.dirname(process.env.DATA_PATH || path.join(__dirname,'data','chandrahasa.db')), 'uploads');
+      fs.mkdirSync(uploadDir, { recursive: true, mode: 0o700 });
+      const media = fs.readdirSync(uploadDir).filter(name => /^[a-f0-9]{36}\.(?:jpg|png|webp|gif)$/.test(name)).map(name => {
+        const file = path.join(uploadDir,name), stat = fs.statSync(file);
+        return { name, url:'/uploads/'+name, bytes:stat.size, createdAt:stat.mtime.toISOString() };
+      }).sort((x,y)=>y.createdAt.localeCompare(x.createdAt));
+      return json(res,200,{media});
+    }
     if (pathname === '/api/admin/media' && method === 'POST') {
       if (rateLimited('media-upload:' + user.id, 60, 60 * 60 * 1000)) return json(res, 429, { error: 'Upload limit reached. Try again later.' });
       const dataUrl = String(body?.dataUrl || '');
