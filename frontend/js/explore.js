@@ -1,0 +1,7 @@
+'use strict';
+(async()=>{
+ const cats=document.getElementById('exploreCategories'),grid=document.getElementById('exploreProducts'),count=document.getElementById('exploreCount');
+ const esc=s=>CH.escapeHTML(String(s??''));
+ try{const d=await CH.api('/api/categories');const items=d.categories||[];cats.innerHTML=items.length?items.map(c=>'<a class="explore-category" href="/shop?category='+encodeURIComponent(c.slug)+'"><b>'+esc(c.name)+'</b><span>'+Number(c.count||0)+' pieces · Explore →</span></a>').join(''):'<div class="explore-status">New categories are being curated. Browse the full collection instead.</div>';}catch(e){cats.innerHTML='<div class="explore-status">Categories could not load. <a href="/shop">Browse all jewellery</a>.</div>';CH.toast('Explore categories could not load.');}
+ try{const d=await CH.api('/api/products?sort=popular&limit=12');const products=d.items||[];count.textContent=products.length+' currently available';if(products.length){CH.renderProductGrid('#exploreProducts',products);}else{grid.innerHTML='<div class="explore-status" style="grid-column:1/-1">The collection is being updated. Please check back soon.</div>';}}catch(e){count.textContent='';grid.innerHTML='<div class="explore-status" style="grid-column:1/-1">We could not reach the live collection. <button class="btn btn-outline" id="exploreRetry">Try again</button></div>';document.getElementById('exploreRetry')?.addEventListener('click',()=>location.reload());CH.toast('The live collection could not load.');}
+})();
