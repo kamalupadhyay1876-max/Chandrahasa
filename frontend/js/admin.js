@@ -81,6 +81,7 @@ $$('[data-admin-tab]').forEach(link => link.addEventListener('click', (e) => {
   if (tab === 'coupons') loadCoupons();
   if (tab === 'customize') loadCustomizations();
   if (tab === 'backups') loadBackups();
+  if (tab === 'media') loadMediaLibrary();
 }));
 
 function boot() { loadStats(); loadCategories(); startAdminLiveRefresh(); }
@@ -350,13 +351,15 @@ async function uploadImage(file){
   const dataUrl=await readAsDataUrl(file);
   return CH.api('/api/admin/media',{method:'POST',body:{dataUrl}});
 }
+async function loadMediaLibrary(){
+  const data=await CH.api('/api/admin/media');const host=$('#mediaPreviewGrid');if(!host)return;
+  host.innerHTML=(data.media||[]).map(item=>'<figure style="margin:0;padding:8px;border:1px solid var(--line);border-radius:8px"><img src="'+item.url+'" alt="Uploaded media" loading="lazy" style="width:100%;aspect-ratio:1;object-fit:cover"><small>'+Math.round(item.bytes/1024)+' KB</small><input readonly value="'+item.url+'" style="width:100%;margin-top:6px"></figure>').join('')||'<p>No uploaded images yet.</p>';
+}
 $('#uploadMediaBtn')?.addEventListener('click',async()=>{
   const files=[...($('#mediaFiles')?.files||[])];if(!files.length){CH.toast('Choose image files first.');return;}
   const status=$('#mediaUploadStatus');status.textContent='Uploading…';
-  try{const urls=[];for(const file of files){const result=await uploadImage(file);urls.push(result.url);}
-    status.textContent=urls.length+' image(s) uploaded.';
-    $('#mediaPreviewGrid').insertAdjacentHTML('afterbegin',urls.map(url=>'<figure style="margin:0;padding:8px;border:1px solid var(--line);border-radius:8px"><img src="'+url+'" alt="Uploaded media" style="width:100%;aspect-ratio:1;object-fit:cover"><input readonly value="'+url+'" style="width:100%;margin-top:6px"></figure>').join(''));
-    $('#mediaFiles').value='';
+  try{for(const file of files)await uploadImage(file);
+    status.textContent=files.length+' image(s) uploaded.';$('#mediaFiles').value='';await loadMediaLibrary();
   }catch(err){status.textContent=err.message;}
 });
 $('#pfUpload')?.addEventListener('change',async()=>{
