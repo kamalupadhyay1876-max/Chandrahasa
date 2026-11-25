@@ -292,7 +292,7 @@ $('#ordersKanban')?.addEventListener('dragstart',e=>{
 });
 $('#ordersKanban')?.addEventListener('dragend',e=>{
   const card=e.target.closest('[data-drag-order]');if(card)card.removeAttribute('aria-grabbed');
-  $('.orders-lane').forEach(l=>l.classList.remove('is-over'));draggedOrderId=null;
+  $$('.orders-lane').forEach(l=>l.classList.remove('is-over'));draggedOrderId=null;
 });
 $('#ordersKanban')?.addEventListener('dragover',e=>{
   const lane=e.target.closest('[data-drop-status]');if(!lane)return;
@@ -314,7 +314,7 @@ $('#ordersKanban')?.addEventListener('drop',async e=>{
 $('#ordersKanban')?.addEventListener('change',e=>{
   const sel=e.target.closest('[data-board-order]');if(sel)saveBoardStatus(Number(sel.dataset.boardOrder),sel.value);
 });
-$('[data-orders-view]').forEach(btn=>btn.addEventListener('click',()=>{
+$$('[data-orders-view]').forEach(btn=>btn.addEventListener('click',()=>{
   const mode=btn.dataset.ordersView;
   $('[data-orders-view]').forEach(b=>b.classList.toggle('active',b===btn));
   $('#ordersKanban')?.classList.toggle('hidden',mode!=='board');
