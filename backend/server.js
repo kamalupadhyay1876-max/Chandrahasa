@@ -420,7 +420,7 @@ async function route(req, res, pathname, query) {
 
   if (pathname === '/api/auth/reset' && method === 'POST') {
     const token = String(body?.token || ''), password = String(body?.password || '');
-    if (password.length < 12 || password.length > 128) return json(res, 400, { error: 'Password must be 12–128 characters.' });
+    if (password.length < 16 || password.length > 128) return json(res, 400, { error: 'Password must be 16–128 characters.' });
     const row = db.prepare("SELECT * FROM password_resets WHERE token_hash = ? AND used = 0 AND expires_at > datetime('now')").get(sha256(token));
     if (!row) return json(res, 400, { error: 'This reset link is invalid or has expired.' });
     const salt = crypto.randomBytes(16).toString('hex');
@@ -1101,7 +1101,7 @@ async function route(req, res, pathname, query) {
 
   // Public, read-only storefront theme subset. Private admin settings never leave the server.
   if (pathname === '/api/storefront/customizations' && method === 'GET') {
-    const allowed = ['customization.theme.primary','customization.theme.accent','customization.theme.background','customization.theme.surface','customization.theme.text','customization.theme.muted','customization.theme.radius','customization.storefront.announcement'];
+    const allowed = ['customization.theme.primary','customization.theme.accent','customization.theme.background','customization.theme.surface','customization.theme.text','customization.theme.muted','customization.theme.radius','customization.store.announcement'];
     const rows = db.prepare('SELECT key,value FROM store_settings WHERE key IN (' + allowed.map(()=>'?').join(',') + ')').all(...allowed);
     const values = Object.fromEntries(rows.map(row => { try { return [row.key, JSON.parse(row.value)]; } catch { return [row.key, null]; } }));
     return json(res, 200, { customizations: values });
