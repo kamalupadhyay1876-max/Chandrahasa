@@ -157,6 +157,19 @@ setInterval(() => { const now = Date.now(); for (const [k, arr] of buckets) { co
 const clientIp = (req) => (req.headers['x-forwarded-for'] || '').split(',')[0].trim() || req.socket.remoteAddress || 'unknown';
 const validEmail = (e) => typeof e === 'string' && /^[^\s@]+@[^\s@]+\.[^\s@]{2,}$/.test(e) && e.length <= 254;
 const clean = (s, max = 300) => String(s ?? '').replace(/[<>"'`]/g, '').trim().slice(0, max);
+
+// Normalize legacy/test category slugs for the public storefront without rewriting
+// owner-managed category or product rows in the database.
+function storefrontCategory(name, slug) {
+  const key = `${String(name || '')} ${String(slug || '')}`.toLowerCase();
+  if (/ring/.test(key)) return { name: 'Rings', slug: 'rings' };
+  if (/necklace/.test(key)) return { name: 'Necklaces', slug: 'necklaces' };
+  if (/earring/.test(key)) return { name: 'Earrings', slug: 'earrings' };
+  if (/pendant/.test(key)) return { name: 'Pendants', slug: 'pendants' };
+  if (/bracelet|bangle/.test(key)) return { name: 'Bracelets', slug: 'bracelets' };
+  if (/gift/.test(key)) return { name: 'Gift Sets', slug: 'gift-sets' };
+  return { name: clean(name || slug, 80), slug: clean(slug || name, 80).toLowerCase() };
+}
 const toInt = (v, dflt = 0) => { const n = parseInt(v, 10); return Number.isFinite(n) ? n : dflt; };
 
 const ORDER_TRANSITIONS = Object.freeze({
@@ -432,10 +445,23 @@ async function route(req, res, pathname, query) {
 
   /* ── CATALOG ────────────────────────────── */
   if (pathname === '/api/categories' && method === 'GET') {
-    const rows = db.prepare('SELECT name, slug, image FROM categories ORDER BY sort_order').all();
+    const rows = db.prepare('SELECT name, slug, image, sort_order FROM categories ORDER BY sort_order').all();
     const counts = db.prepare('SELECT category_slug, COUNT(*) n FROM products WHERE is_active = 1 GROUP BY category_slug').all();
     const map = Object.fromEntries(counts.map(c => [c.category_slug, c.n]));
-    return json(res, 200, { categories: rows.map(r => ({ ...r, count: map[r.slug] || 0 })) });
+    const grouped = new Map();
+    for (const row of rows) {
+      const count = Number(map[row.slug] || 0);
+      if (!count) continue;
+      const canonical = storefrontCategory(row.name, row.slug);
+      const existing = grouped.get(canonical.slug);
+      if (existing) {
+        existing.count += count;
+        if (!existing.image && row.image) existing.image = row.image;
+      } else {
+        grouped.set(canonical.slug, { ...canonical, image: row.image || '', count, sort_order: row.sort_order });
+      }
+    }
+    return json(res, 200, { categories: [...grouped.values()].sort((a,b) => a.sort_order - b.sort_order).map(({sort_order,...category}) => category) });
   }
 
   if (pathname === '/api/products' && method === 'GET') {
@@ -450,7 +476,14 @@ async function route(req, res, pathname, query) {
     const limit = Math.min(48, Math.max(1, toInt(query.get('limit'), 24)));
     let where = 'WHERE is_active = 1 AND price BETWEEN ? AND ?';
     const args = [min, max];
-    if (category && category !== 'all') { where += ' AND category_slug = ?'; args.push(category); }
+    if (category && category !== 'all') {
+      const normalized = storefrontCategory(category, category).slug;
+      const known = db.prepare('SELECT name,slug FROM categories').all();
+      const matching = known.filter(row => storefrontCategory(row.name, row.slug).slug === normalized).map(row => row.slug);
+      const candidates = [...new Set([...matching, category])];
+      where += ` AND category_slug IN (${candidates.map(() => '?').join(',')})`;
+      args.push(...candidates);
+    }
     if (badge) { where += ' AND badge = ?'; args.push(badge); }
     if (inStock) where += ' AND stock > 0';
     if (saleOnly) where += ' AND compare_price IS NOT NULL AND compare_price > price';
