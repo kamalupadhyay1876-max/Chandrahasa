@@ -162,7 +162,8 @@ const clean = (s, max = 300) => String(s ?? '').replace(/[<>"'`]/g, '').trim().s
 // owner-managed category or product rows in the database.
 function storefrontCategory(name, slug) {
   const key = `${String(name || '')} ${String(slug || '')}`.toLowerCase();
-  if (/(?:^|[^a-z])rings?(?:$|[^a-z])|ring(?:demo|my|[0-9])/.test(key)) return { name: 'Rings', slug: 'rings' };
+  if (/(demo|test|sample)/.test(key)) return null;
+  if (/(?:^|[^a-z])rings?(?:$|[^a-z])|ring(?:my|[0-9])/.test(key)) return { name: 'Rings', slug: 'rings' };
   if (/necklace/.test(key)) return { name: 'Necklaces', slug: 'necklaces' };
   if (/earring/.test(key)) return { name: 'Earrings', slug: 'earrings' };
   if (/pendant/.test(key)) return { name: 'Pendants', slug: 'pendants' };
@@ -459,6 +460,7 @@ async function route(req, res, pathname, query) {
       const count = Number(map[row.slug] || 0);
       if (!count) continue;
       const canonical = storefrontCategory(row.name, row.slug);
+      if (!canonical) continue;
       const existing = grouped.get(canonical.slug);
       if (existing) {
         existing.count += count;
@@ -484,9 +486,11 @@ async function route(req, res, pathname, query) {
     let where = 'WHERE is_active = 1 AND price BETWEEN ? AND ?';
     const args = [min, max];
     if (category && category !== 'all') {
-      const normalized = storefrontCategory(category, category).slug;
+      const canonicalFilter = storefrontCategory(category, category);
+      if (!canonicalFilter) return json(res, 200, { items: [], total: 0, page, pages: 0 });
+      const normalized = canonicalFilter.slug;
       const known = db.prepare('SELECT name,slug FROM categories').all();
-      const matching = known.filter(row => storefrontCategory(row.name, row.slug).slug === normalized).map(row => row.slug);
+      const matching = known.filter(row => { const canonical = storefrontCategory(row.name, row.slug); return canonical && canonical.slug === normalized; }).map(row => row.slug);
       const candidates = [...new Set([...matching, category])];
       where += ` AND category_slug IN (${candidates.map(() => '?').join(',')})`;
       args.push(...candidates);
