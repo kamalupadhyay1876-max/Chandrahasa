@@ -14,14 +14,15 @@
   <aside class="admin-side">
     <a class="brand" href="/" style="text-decoration:none"><span class="brand-name">Chandrahasa</span><span class="brand-tag">admin studio</span></a>
     <nav aria-label="Admin sections">
-      <a class="admin-link" href="/admin-operations.html">Operations</a>
-      <a class="admin-link" href="/admin-marketplace.html">Marketplace Ops</a>
       <a class="admin-link active" href="#overview" data-admin-tab="overview"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round"><path d="M3 3v18h18"/><path d="M7 14l4-4 4 4 5-6"/></svg>Overview</a>
       <a class="admin-link" href="#categories" data-admin-tab="categories">Categories</a>
       <a class="admin-link" href="#products" data-admin-tab="products"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round"><path d="M20 7l-8-4-8 4v10l8 4 8-4z"/><path d="M4 7l8 4 8-4M12 11v10"/></svg>Products</a>
       <a class="admin-link" href="#orders" data-admin-tab="orders"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round"><path d="M6 2h12v20l-3-2-3 2-3-2-3 2z"/><path d="M9 7h6M9 11h6"/></svg>Orders</a>
       <a class="admin-link" href="#customers" data-admin-tab="customers"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round"><circle cx="9" cy="8" r="3.5"/><path d="M2.5 20c0-3.6 3-6 6.5-6s6.5 2.4 6.5 6"/><circle cx="17.5" cy="9.5" r="2.6"/><path d="M15.5 14.3c3.2.5 5.5 2.8 5.5 5.7"/></svg>Customers</a>
       <a class="admin-link" href="#coupons" data-admin-tab="coupons"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round"><path d="M3 9V5a2 2 0 0 1 2-2h4l2 3h10a2 2 0 0 1 2 2v10a2 2 0 0 1-2 2h-4l-2-3H5a2 2 0 0 1-2-2z" transform="rotate(0)"/><path d="M9 15l6-6"/></svg>Coupons</a>
+      <a class="admin-link" href="#customize" data-admin-tab="customize">Store customization</a>
+      <a class="admin-link" href="#media" data-admin-tab="media">Media library</a>
+      <a class="admin-link" href="#backups" data-admin-tab="backups">Backups & recovery</a>
     </nav>
     <div style="margin-top:auto;padding:0 22px;font-size:11px;color:#6f6a5e">Signed in as<br><b id="adminWho" style="color:#d9c07a">—</b><br><a href="/" style="color:#a8a193;text-decoration:none;display:inline-block;margin-top:10px">← Back to storefront</a><br><button data-signout style="background:none;border:none;color:#c96f5a;font-size:12px;padding:8px 0;cursor:pointer">Sign out</button></div>
   </aside>
@@ -117,6 +118,54 @@
         <div class="admin-panel" style="margin:0"><h2>Live coupons</h2><div id="couponList"></div></div>
       </div>
     </section>
+
+    <!-- 200+ OWNER CUSTOMIZATION CONTROLS -->
+    <section id="tab-customize" class="admin-tab hidden">
+      <div class="admin-panel">
+        <div style="display:flex;justify-content:space-between;align-items:center;gap:12px;flex-wrap:wrap">
+          <div><h2>Store customization</h2><p style="color:var(--soft-ink)">200+ editable brand, storefront, content, product, checkout, SEO and experience settings. Changes are saved to the database; supported theme settings are published to customers.</p></div>
+          <div><b id="customizationCount">200+ controls</b> <button class="btn btn-dark btn-sm" id="saveCustomizationsBtn" type="button">Save all changes</button></div>
+        </div>
+        <div id="customizationGroups" style="display:grid;gap:14px;margin-top:18px"></div>
+      </div>
+    </section>
+
+    <!-- MEDIA LIBRARY -->
+    <section id="tab-media" class="admin-tab hidden">
+      <div class="admin-panel">
+        <h2>Media library</h2>
+        <p style="color:var(--soft-ink)">Upload product and category images to persistent Railway storage. JPEG, PNG, WebP and GIF, up to 8 MB each. SVG is intentionally disabled.</p>
+        <div style="display:flex;gap:12px;align-items:center;flex-wrap:wrap;margin:16px 0">
+          <input id="mediaFiles" type="file" accept="image/jpeg,image/png,image/webp,image/gif" multiple>
+          <button class="btn btn-dark btn-sm" id="uploadMediaBtn" type="button">Upload images</button>
+          <span id="mediaUploadStatus" role="status"></span>
+        </div>
+        <div id="mediaPreviewGrid" style="display:grid;grid-template-columns:repeat(auto-fill,minmax(150px,1fr));gap:12px"></div>
+      </div>
+    </section>
+
+    <!-- BACKUP & RECOVERY -->
+    <section id="tab-backups" class="admin-tab hidden">
+      <div class="admin-panel">
+        <h2>Backups & account recovery</h2>
+        <p style="color:var(--soft-ink)">Automatic daily SQLite backups are created on the persistent volume. Create and download a verified backup before risky changes. Downloads include a SHA-256 checksum.</p>
+        <div style="display:flex;gap:10px;flex-wrap:wrap;margin:16px 0">
+          <button class="btn btn-dark btn-sm" id="createBackupBtn" type="button">Create backup now</button>
+          <button class="btn btn-outline btn-sm" id="refreshBackupsBtn" type="button">Refresh list</button>
+        </div>
+        <div id="backupStatus" role="status" style="margin-bottom:12px"></div>
+        <div style="overflow-x:auto"><table class="admin-table" id="backupsTable"><thead><tr><th>Backup</th><th>Created</th><th>Size</th><th>Checksum</th><th>Download</th></tr></thead><tbody></tbody></table></div>
+        <div style="margin-top:20px;padding:16px;background:var(--cream);border-radius:8px">
+          <b>Lost password or setup key?</b>
+          <p>Use the Owner email password-reset flow if email delivery is configured. If email access and password are both lost, use the private Railway service shell with the documented recovery script. The setup key is only for the first owner claim; it is not a permanent login credential.</p>
+          <b>Restore data safely</b>
+          <p>Restore is an offline operation. Stop the service, run <code>npm run db:restore -- /data/backups/backup-file.sqlite</code>, then restart and verify health. The script checks the SHA-256 checksum and SQLite integrity and creates a safety backup before replacing the database.</p>
+          <a href="https://github.com/kamalupadhyay1876-max/Chandrahasa/blob/main/docs/OWNER-RECOVERY.md" target="_blank" rel="noopener">Open recovery instructions</a>
+        </div>
+      </div>
+    </section>
+
+
   </main>
 </div>
 
@@ -146,6 +195,7 @@
         <div class="field"><label for="pfArtisan">Karigar</label><input id="pfArtisan" placeholder="Ramesh Prajapat · Jaipur"></div>
       </div>
       <div class="field"><label for="pfImages">Product image URLs or paths (one per line)</label><textarea id="pfImages" rows="3" placeholder="/assets/img/product.webp&#10;https://..."></textarea></div>
+      <div class="field"><label for="pfUpload">Upload product images</label><input id="pfUpload" type="file" accept="image/jpeg,image/png,image/webp,image/gif" multiple><small>Uploaded images are saved to the Railway persistent volume.</small></div>
       <div class="field"><label for="pfStory">Craft / artisan story</label><textarea id="pfStory" rows="2" placeholder="Optional story shown with the piece"></textarea></div>
       <div class="field"><label for="pfDesc">Description</label><textarea id="pfDesc" rows="3" placeholder="Product description…"></textarea></div>
       <label style="display:flex;gap:8px;align-items:center;margin:12px 0"><input id="pfActive" type="checkbox" checked> Publish on storefront</label>
