@@ -126,7 +126,8 @@
     <h3 id="productModalTitle" style="font-family:var(--font-display);color:var(--charcoal);font-size:24px;margin-bottom:14px">Add a new piece</h3>
     <form id="productForm">
       <input type="hidden" id="pfId">
-      <div class="field"><label for="pfName">Name *</label><input id="pfName" required placeholder="Floral Silver Ring"></div>
+      <div class="field"><label for="pfName">Name *</label><input id="pfName" required maxlength="120" placeholder="Floral Silver Ring"></div>
+      <div class="field"><label for="pfSlug">Product URL slug</label><input id="pfSlug" maxlength="120" placeholder="floral-silver-ring"></div>
       <div class="field-row">
         <div class="field"><label for="pfCategory">Category *</label><select id="pfCategory" required><option value="">Loading categories…</option></select></div>
         <div class="field"><label for="pfBadge">Badge</label><input id="pfBadge" placeholder="NEW / HOT / SALE…" maxlength="20"></div>
@@ -141,9 +142,13 @@
       </div>
       <div class="field-row">
         <div class="field"><label for="pfWeight">Weight</label><input id="pfWeight" placeholder="4.2 g"></div>
+        <div class="field"><label for="pfPurity">Material / purity</label><input id="pfPurity" maxlength="80" placeholder="925 Sterling Silver"></div>
         <div class="field"><label for="pfArtisan">Karigar</label><input id="pfArtisan" placeholder="Ramesh Prajapat · Jaipur"></div>
       </div>
-      <div class="field"><label for="pfDesc">Description</label><textarea id="pfDesc" rows="2" placeholder="One lyrical line for the piece…"></textarea></div>
+      <div class="field"><label for="pfImages">Product image URLs or paths (one per line)</label><textarea id="pfImages" rows="3" placeholder="/assets/img/product.webp&#10;https://..."></textarea></div>
+      <div class="field"><label for="pfStory">Craft / artisan story</label><textarea id="pfStory" rows="2" placeholder="Optional story shown with the piece"></textarea></div>
+      <div class="field"><label for="pfDesc">Description</label><textarea id="pfDesc" rows="3" placeholder="Product description…"></textarea></div>
+      <label style="display:flex;gap:8px;align-items:center;margin:12px 0"><input id="pfActive" type="checkbox" checked> Publish on storefront</label>
       <div style="display:flex;gap:10px;justify-content:flex-end">
         <button type="button" class="btn btn-outline btn-sm" id="cancelProductBtn">Cancel</button>
         <button type="submit" class="btn btn-dark btn-sm">Save piece</button>
