@@ -66,3 +66,26 @@ button:disabled,[aria-disabled="true"]{cursor:not-allowed;opacity:.58}
  html{scroll-behavior:auto}
  *,*::before,*::after{animation-duration:.01ms!important;animation-iteration-count:1!important;transition-duration:.01ms!important}
 }
+
+
+/* Gold-led luxury palette: champagne, antique gold and warm ivory. */
+:root{
+  --charcoal:#302719;--ink:#403728;--soft-ink:#71634e;--faint:#948873;
+  --cream:#f8f4eb;--paper:#fffdf7;--sand:#eee5d2;
+  --line:rgba(72,55,27,.14);--line-strong:rgba(112,83,35,.30);
+  --gold:#c5a15a;--gold-deep:#89672d;--gold-soft:rgba(197,161,90,.16);
+  --ch-focus:rgba(197,161,90,.42);--ch-border:rgba(72,55,27,.15);--ch-surface:#fffdf7;
+}
+::selection{background:#c5a15a;color:#241d12}
+.nav{border-bottom-color:rgba(137,103,45,.25)}
+.brand-name,.nav-links a,.icon-btn,.hamburger{color:#302719}
+.brand-tag,.nav-links a:hover,.nav-links a.ch-nav-current{color:#89672d}
+.nav-links a::after{background:#c5a15a}
+.btn-dark,.feature-btn{background:#302719;border-color:#c5a15a}
+.btn-outline{border-color:#b89550;color:#755722}
+.btn-outline:hover{background:#c5a15a;color:#241d12}
+.badge-dot,.ch-notify-dot{background:#c5a15a}
+.checkout-layout .panel,.checkout-layout .summary-panel,.feature-panel{border-color:rgba(137,103,45,.18)}
+.summary-line img,.summary-image-empty{width:64px;height:64px;object-fit:cover;border-radius:8px;background:#eee5d2;flex:0 0 64px}
+.summary-image-empty{display:grid;place-items:center;color:#89672d;font-family:var(--font-display,Georgia,serif);letter-spacing:.12em;font-size:13px;border:1px solid rgba(137,103,45,.22)}
+@media(prefers-reduced-motion:reduce){*{scroll-behavior:auto}}
