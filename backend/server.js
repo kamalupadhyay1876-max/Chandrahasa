@@ -336,6 +336,12 @@ async function route(req, res, pathname, query) {
     } catch { return json(res, 503, { ok: false, service: 'chandrahasa', database: 'error' }); }
   }
 
+  /* Public payment readiness: expose no secret material. */
+  if (pathname === '/api/payments/config' && method === 'GET') {
+    const enabled = Boolean(process.env.RAZORPAY_KEY_ID && process.env.RAZORPAY_KEY_SECRET && process.env.RAZORPAY_WEBHOOK_SECRET);
+    return json(res, 200, { enabled, keyId: enabled ? process.env.RAZORPAY_KEY_ID : '' });
+  }
+
   /* ── AUTH ───────────────────────────────── */
   if (pathname === '/api/auth/signup' && method === 'POST') {
     if (rateLimited('signup:' + clientIp(req), 5, 600000)) return json(res, 429, { error: 'Too many attempts. Try again later.' });
