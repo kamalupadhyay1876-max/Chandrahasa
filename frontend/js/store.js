@@ -333,3 +333,34 @@ window.addEventListener('error', (e) => {
     t.src = t.dataset.fb || '/assets/img/rings.webp';
   }
 }, true);
+
+
+/* Public storefront theme: strict allowlist + value validation, refreshed periodically for live changes. */
+async function applyStoreCustomizations(){
+  try{
+    const response=await CH.api('/api/storefront/customizations');
+    const values=response.customizations||{},root=document.documentElement;
+    const colors={
+      'customization.theme.primary':'--charcoal',
+      'customization.theme.accent':'--gold',
+      'customization.theme.background':'--cream',
+      'customization.theme.surface':'--paper',
+      'customization.theme.text':'--ink',
+      'customization.theme.muted':'--soft-ink',
+      'customization.theme.border':'--line'
+    };
+    for(const [key,variable] of Object.entries(colors)){
+      const value=values[key];
+      if(typeof value==='string'&&/^(#[0-9a-fA-F]{3,8}|rgba?\([0-9.,%\s]+\))$/.test(value))root.style.setProperty(variable,value);
+    }
+    const radius=values['customization.theme.radius'];
+    if(typeof radius==='string'&&/^\d{1,2}px$/.test(radius))root.style.setProperty('--radius',radius);
+    const announcement=values['customization.storefront.announcement'];
+    if(typeof announcement==='string'&&announcement.length<=180){
+      const node=document.querySelector('[data-announcement-text]');
+      if(node)node.textContent=announcement;
+    }
+  }catch{/* Keep the default storefront theme if settings are unavailable. */}
+}
+if(document.readyState==='loading')document.addEventListener('DOMContentLoaded',applyStoreCustomizations,{once:true});else applyStoreCustomizations();
+setInterval(()=>{if(!document.hidden)applyStoreCustomizations();},60000);
