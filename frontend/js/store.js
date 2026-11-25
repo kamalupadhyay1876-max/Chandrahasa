@@ -120,7 +120,7 @@ function renderShipBar(subtotal) {
 
 function cartLineHTML(i) {
   const safeAttr = value => String(value ?? '').replace(/[&<>"']/g, ch => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[ch]));
-  const image = typeof i.image === 'string' && (/^\/uploads\/[a-zA-Z0-9._/-]+$/.test(i.image) || /^https?:\/\/[^"'<>\\s]+$/i.test(i.image)) ? i.image : '';
+  const image = typeof i.image === 'string' && (/^\/(?:uploads|assets)\/[a-zA-Z0-9._/-]+$/.test(i.image) || /^https?:\/\/[^"'<>\\s]+$/i.test(i.image)) ? i.image : '';
   const compare = i.compare_price && i.compare_price > i.price ? `<span class="pc-compare">${CH.money(i.compare_price)}</span>` : '';
   return `<div class="cart-line" data-line="${i.productId}" data-size="${i.size || ''}">
     ${image ? `<img src="${safeAttr(image)}" alt="${safeAttr(i.name)}" loading="lazy">` : '<div class="cart-image-empty" aria-label="No product image available">CH</div>'}
