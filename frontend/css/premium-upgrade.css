@@ -1,0 +1,68 @@
+/* Chandrahasa Premium UX Upgrade — additive, framework-free refinements */
+:root{
+  --ch-focus:rgba(151,119,65,.34);
+  --ch-border:rgba(52,35,31,.13);
+  --ch-surface:#fffefa;
+  --ch-muted:#766d64;
+  --ch-radius:14px;
+  --ch-shadow:0 10px 30px rgba(44,30,24,.055);
+}
+html{scroll-behavior:smooth;scroll-padding-top:92px}
+body{color:#302824;-webkit-font-smoothing:antialiased;text-rendering:optimizeLegibility}
+img{max-width:100%}
+button,a,input,select,textarea{ -webkit-tap-highlight-color:transparent }
+button:focus-visible,a:focus-visible,input:focus-visible,select:focus-visible,textarea:focus-visible{outline:3px solid var(--ch-focus);outline-offset:3px}
+button:disabled,[aria-disabled="true"]{cursor:not-allowed;opacity:.58}
+::selection{background:#e8ddc8;color:#302824}
+.container{max-width:1320px}
+.section-heading h2,.shop-head h1,.feature-head h1{letter-spacing:-.025em}
+.product-grid{align-items:stretch}
+.product-card{height:100%;border:1px solid rgba(52,35,31,.075);background:var(--ch-surface)}
+.product-card:focus-within{outline:2px solid var(--ch-focus);outline-offset:3px}
+.product-card img{background:#f0ece5}
+.pc-name{line-height:1.42;overflow-wrap:anywhere}
+.pc-price,.price{font-variant-numeric:tabular-nums}
+.shop-head{gap:18px;align-items:flex-end}
+.shop-count{color:var(--ch-muted)}
+.filters{border:1px solid var(--ch-border);border-radius:16px;background:#fffefa;padding:20px}
+.filters h3{margin-top:24px;padding-top:16px;border-top:1px solid rgba(52,35,31,.08)}
+.filter-opt{min-height:38px;display:flex;align-items:center;gap:10px}
+.filter-opt input{accent-color:#5a2937}
+.sort-select{min-height:44px;border:1px solid var(--ch-border);border-radius:10px;background:#fffefa;padding:8px 34px 8px 12px}
+.pdp-grid{align-items:start}
+.pdp-stage{background:#f0ece5;border-radius:16px;overflow:hidden}
+.pdp-info{position:sticky;top:24px}
+.pdp-info h1{line-height:1.12;letter-spacing:-.025em}
+.checkout-layout{align-items:start;gap:clamp(22px,4vw,52px)}
+.checkout-layout .panel,.checkout-layout .summary-panel{border:1px solid var(--ch-border);border-radius:16px;background:#fffefa}
+.checkout-layout label{line-height:1.45}
+.feature-shell{max-width:1180px}
+.feature-panel{box-shadow:0 12px 34px rgba(44,30,24,.045)}
+.feature-nav{display:flex;gap:8px;overflow-x:auto;padding:3px 0 16px;scrollbar-width:thin}
+.feature-nav a{white-space:nowrap;border:1px solid var(--ch-border);border-radius:999px;padding:9px 14px;color:#574840;text-decoration:none;font-size:12px}
+.feature-nav a[aria-current="page"],.feature-nav a:hover{background:#4b252f;color:#fff;border-color:#4b252f}
+.empty-state{max-width:680px;margin-inline:auto}
+.toast-wrap{z-index:9999}
+.toast{box-shadow:0 8px 24px rgba(30,20,18,.16)}
+@media(max-width:940px){
+ .pdp-info{position:static}
+ .filters{margin-bottom:16px}
+ .shop-head{align-items:flex-start;flex-wrap:wrap}
+}
+@media(max-width:640px){
+ html{scroll-padding-top:72px}
+ .container{width:calc(100% - 28px)}
+ .shop-head{display:grid;grid-template-columns:1fr;gap:12px}
+ .shop-head>label{justify-content:space-between;width:100%}
+ .sort-select{max-width:65%}
+ .filters{padding:16px}
+ .pdp-stage{border-radius:12px}
+ .feature-shell{padding-inline:14px}
+ .feature-nav{margin-inline:-2px}
+ .feature-nav a{padding:9px 12px}
+ .checkout-layout .panel,.checkout-layout .summary-panel{border-radius:12px}
+}
+@media(prefers-reduced-motion:reduce){
+ html{scroll-behavior:auto}
+ *,*::before,*::after{animation-duration:.01ms!important;animation-iteration-count:1!important;transition-duration:.01ms!important}
+}
