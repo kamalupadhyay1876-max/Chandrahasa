@@ -31,16 +31,16 @@ const backup = require('./backup');
   finally { check.close(); }
   fs.renameSync(temp, DATA_PATH);
   for (const suffix of ['-wal', '-shm']) fs.rmSync(`${DATA_PATH}${suffix}`, { force: true });
-  const mediaPath = sourcePath.replace(/\\.sqlite$/, '.media.tar.gz');
+  const mediaPath = sourcePath.replace(/\.sqlite$/, '.media.tar.gz');
   let mediaRestored = false;
   if (fs.existsSync(mediaPath)) {
     const mediaSumPath = `${mediaPath}.sha256`;
     if (!fs.existsSync(mediaSumPath)) throw new Error('Media archive checksum missing; database restored but media archive was not extracted.');
-    const expectedMedia = fs.readFileSync(mediaSumPath,'utf8').trim().split(/\\s+/)[0];
+    const expectedMedia = fs.readFileSync(mediaSumPath,'utf8').trim().split(/\s+/)[0];
     const actualMedia = crypto.createHash('sha256').update(fs.readFileSync(mediaPath)).digest('hex');
     if (!/^[a-f0-9]{64}$/i.test(expectedMedia) || expectedMedia !== actualMedia) throw new Error('Media archive checksum mismatch; refusing media restore.');
     const { execFileSync } = require('child_process');
-    const entries = execFileSync('tar',['-tzf',mediaPath],{encoding:'utf8',maxBuffer:10*1024*1024}).split(/\\r?\\n/).filter(Boolean);
+    const entries = execFileSync('tar',['-tzf',mediaPath],{encoding:'utf8',maxBuffer:10*1024*1024}).split(/\r?\n/).filter(Boolean);
     if (entries.some(entry => entry.startsWith('/') || entry.split('/').includes('..'))) throw new Error('Unsafe path found in media archive.');
     const uploadDir = path.join(path.dirname(DATA_PATH),'uploads');
     fs.mkdirSync(uploadDir,{recursive:true,mode:0o700});
