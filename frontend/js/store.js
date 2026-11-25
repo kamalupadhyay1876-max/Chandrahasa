@@ -92,8 +92,12 @@ CH.addToCart = async function addToCart(item) {
   const items = guestCartLoad();
   const found = items.find(i => i.productId === item.productId && (i.size || '') === (item.size || ''));
   const stock = item.stock ?? 99;
-  if (found) found.qty = Math.min(stock, found.qty + (item.qty || 1));
-  else items.push({ ...item, qty: item.qty || 1, size: item.size || '' });
+  const image = CH.safeImageUrl(item.image);
+  if (found) {
+    found.qty = Math.min(stock, found.qty + (item.qty || 1));
+    if (image && !CH.safeImageUrl(found.image)) found.image = image;
+    if (!found.huid && item.huid) found.huid = item.huid;
+  } else items.push({ ...item, image, qty: item.qty || 1, size: item.size || '' });
   guestCartSave(items);
   return { items };
 };
