@@ -466,6 +466,7 @@ async function route(req, res, pathname, query) {
 
   if (pathname === '/api/products' && method === 'GET') {
     const category = clean(query.get('category') || '', 60);
+    const purity = clean(query.get('purity') || '', 40);
     const search = clean(query.get('search') || '', 80);
     const min = toInt(query.get('min'), 0), max = toInt(query.get('max'), 1000000);
     const badge = clean(query.get('badge') || '', 40);
@@ -485,6 +486,7 @@ async function route(req, res, pathname, query) {
       args.push(...candidates);
     }
     if (badge) { where += ' AND badge = ?'; args.push(badge); }
+    if (purity) { where += ' AND purity LIKE ?'; args.push('%' + purity + '%'); }
     if (inStock) where += ' AND stock > 0';
     if (saleOnly) where += ' AND compare_price IS NOT NULL AND compare_price > price';
     if (search) { where += ' AND (name LIKE ? OR description LIKE ? OR huid LIKE ? OR category_slug IN (SELECT slug FROM categories WHERE name LIKE ?))'; args.push(`%${search}%`, `%${search}%`, `%${search}%`, `%${search}%`); }
