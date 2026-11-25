@@ -114,7 +114,7 @@ $('#checkoutForm').addEventListener('submit', async (e) => {
   if (state.loadError) return showError('Your bag could not be loaded. Please retry before placing the order.');
   if (!state.items.length) return showError('Your bag is empty — add a piece before checking out.');
   const phoneField = $('#coPhone'), pinField = $('#coPincode');
-  phoneField.setCustomValidity(/^\+?[0-9\s-]{10,15}$/.test(phoneField.value.trim()) ? '' : 'Enter a valid phone number (10–15 digits).');
+  phoneField.setCustomValidity(/^[+]?[0-9 -]{10,15}$/.test(phoneField.value.trim()) ? '' : 'Enter a valid phone number (10–15 digits).');
   pinField.setCustomValidity(/^[1-9][0-9]{5}$/.test(pinField.value.trim()) ? '' : 'Enter a valid 6-digit PIN code.');
   if (!$('#checkoutForm').reportValidity()) return;
   const email = $('#coEmail').value.trim(), phone = phoneField.value.trim();

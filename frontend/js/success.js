@@ -31,7 +31,7 @@ function startConfetti(){
 }
 document.addEventListener('DOMContentLoaded',()=>printButton?.addEventListener('click',()=>window.print()));
 (async function verifyOrder(){
-  if(!orderId||!/^d+$/.test(orderId)){showUnverified('No valid order reference was provided. Check your bag or open the confirmation link from your order email.');return;}
+  if(!orderId||!/^[0-9]+$/.test(orderId)){showUnverified('No valid order reference was provided. Check your bag or open the confirmation link from your order email.');return;}
   try{
     const {order}=await CH.api(`/api/orders/${encodeURIComponent(orderId)}?token=${encodeURIComponent(confirmationToken)}`);
     if(!order||String(order.id)!==String(orderId))throw new Error('Order reference mismatch');
