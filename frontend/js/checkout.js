@@ -73,9 +73,9 @@ $('#couponForm').addEventListener('submit', (e) => { e.preventDefault(); applyCo
 $('#giftWrapChk').addEventListener('change', (e) => { state.giftWrap = e.target.checked; recalc(); });
 
 /* ── payment method toggle ── */
-$('.pay-method').forEach(btn => btn.addEventListener('click', () => {
+CH.$('.pay-method').forEach(btn => btn.addEventListener('click', () => {
   state.method = btn.dataset.method;
-  $('.pay-method').forEach(b => { const on = b === btn; b.classList.toggle('active', on); b.setAttribute('aria-checked', String(on)); });
+  CH.$('.pay-method').forEach(b => { const on = b === btn; b.classList.toggle('active', on); b.setAttribute('aria-checked', String(on)); });
 }));
 
 async function configureOnlinePayments() {
