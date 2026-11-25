@@ -1,0 +1,35 @@
+<!DOCTYPE html>
+<html lang="en"><head>
+<meta charset="UTF-8"><meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
+<title>Explore the Collection — Chandrahasa</title>
+<meta name="description" content="Explore the Chandrahasa jewellery collection by category and discover current pieces.">
+<link rel="icon" type="image/svg+xml" href="/assets/favicon.svg">
+<link rel="stylesheet" href="/css/style.css"><link rel="stylesheet" href="/css/premium-upgrade.css">
+<style>
+.explore-hero{padding:clamp(54px,9vw,112px) 0 52px;background:linear-gradient(120deg,#f0e9dd,#faf7f0 55%,#e8dfd1);overflow:hidden}
+.explore-hero .container{display:grid;grid-template-columns:1.05fr .95fr;align-items:center;gap:clamp(24px,6vw,80px)}
+.explore-kicker{font-size:10px;letter-spacing:.22em;text-transform:uppercase;color:#876b48}
+.explore-hero h1{font:clamp(44px,6.8vw,84px)/.98 Georgia,serif;letter-spacing:-.045em;margin:18px 0}
+.explore-hero h1 em{font-weight:400;color:#76505a}
+.explore-hero p{max-width:48ch;color:#6e6258;line-height:1.8}
+.explore-art{min-height:330px;border-radius:46% 46% 12px 12px;overflow:hidden;background:#e2d8c9;position:relative}
+.explore-art img{width:100%;height:100%;min-height:330px;object-fit:cover;mix-blend-mode:multiply}
+.explore-section{padding:64px 0}
+.explore-categories{display:grid;grid-template-columns:repeat(4,minmax(0,1fr));gap:14px;margin:24px 0 54px}
+.explore-category{min-height:110px;padding:22px;border:1px solid #e4ddd3;border-radius:12px;background:#fffefa;color:#342a27;text-decoration:none;display:flex;flex-direction:column;justify-content:space-between;transition:transform .3s,box-shadow .3s}
+.explore-category:hover{transform:translateY(-4px);box-shadow:0 16px 34px #30212812}
+.explore-category b{font:24px Georgia,serif}.explore-category span{font-size:11px;color:#82766c}
+.explore-toolbar{display:flex;justify-content:space-between;align-items:end;gap:20px;margin-bottom:20px}
+.explore-toolbar p{color:#81766d;font-size:13px}
+.explore-grid{display:grid;grid-template-columns:repeat(4,minmax(0,1fr));gap:18px}
+.explore-status{padding:32px;text-align:center;border:1px solid #e4ddd3;border-radius:12px;color:#71665d}
+@media(max-width:850px){.explore-hero .container{grid-template-columns:1fr}.explore-art{min-height:240px}.explore-art img{min-height:240px}.explore-categories{grid-template-columns:repeat(2,minmax(0,1fr))}.explore-grid{grid-template-columns:repeat(2,minmax(0,1fr));gap:12px}}
+@media(max-width:420px){.explore-section{padding:42px 0}.explore-category{min-height:96px;padding:16px}.explore-category b{font-size:21px}}
+</style></head><body>
+<div data-layout="header"></div>
+<main>
+<section class="explore-hero"><div class="container"><div><span class="explore-kicker">A closer look at Chandrahasa</span><h1>Find the piece<br><em>that feels like you.</em></h1><p>Browse the live collection by category, then explore product details, availability and care information before choosing.</p><a class="btn btn-dark" href="/shop">View all jewellery <span aria-hidden="true">↗</span></a></div><div class="explore-art"><img src="/assets/img/hero.webp" alt="Chandrahasa jewellery collection" fetchpriority="high"></div></div></section>
+<section class="explore-section"><div class="container"><span class="kicker">Explore by form</span><h2 class="h-serif">Choose your <em>direction.</em></h2><div id="exploreCategories" class="explore-categories"><div class="explore-status">Loading live categories…</div></div><div class="explore-toolbar"><div><span class="kicker">The current collection</span><h2 class="h-serif">Pieces to <em>discover.</em></h2></div><p id="exploreCount" aria-live="polite">Loading available pieces…</p></div><div id="exploreProducts" class="explore-grid" aria-live="polite"><div class="explore-status" style="grid-column:1/-1">Loading the live collection…</div></div></div></section>
+</main><div data-layout="footer"></div>
+<script src="/js/layout.js"></script><script src="/js/store.js"></script><script src="/js/cards.js"></script><script src="/js/explore.js"></script>
+</body></html>

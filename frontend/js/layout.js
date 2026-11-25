@@ -5,7 +5,6 @@
 'use strict';
 
 const HEADER = `
-<div class="announce" aria-hidden="true"><div class="announce-track" id="announceTrack"></div></div>
 <header class="nav">
   <div class="container nav-inner">
     <a class="brand" href="/" aria-label="Chandrahasa — divine jewellery, home">
@@ -15,6 +14,7 @@ const HEADER = `
     <div class="nav-search"><button class="nav-search-trigger" type="button" data-open-search aria-label="Search jewellery"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round"><circle cx="11" cy="11" r="7"/><path d="m20 20-4-4"/></svg><span>Search jewellery, styles and more</span></button></div>
     <nav aria-label="Primary">
       <ul class="nav-links">
+        <li><a href="/explore">Explore</a></li>
         <li><a href="/shop">All Jewellery</a></li>
         <li><a href="/shop?category=rings">Rings</a></li>
         <li><a href="/shop?category=earrings">Earrings</a></li>
@@ -40,7 +40,7 @@ const HEADER = `
     </div>
   </div>
   <div class="mobile-menu">
-    <a href="/shop">Shop All</a><a href="/shop?category=rings">Rings</a><a href="/shop?category=necklaces">Necklaces</a><a href="/shop?category=earrings">Earrings</a><a href="/shop?category=pendants">Pendants</a><a href="/shop?category=bracelets">Bracelets</a><a href="/heritage">Heritage &amp; Artisans</a><a href="/account">My Account</a><a href="/contact">Contact</a>
+    <a href="/explore">Explore</a><a href="/shop">Shop All</a><a href="/shop?category=rings">Rings</a><a href="/shop?category=necklaces">Necklaces</a><a href="/shop?category=earrings">Earrings</a><a href="/shop?category=pendants">Pendants</a><a href="/shop?category=bracelets">Bracelets</a><a href="/heritage">Heritage &amp; Artisans</a><a href="/account">My Account</a><a href="/contact">Contact</a>
   </div>
 </header>`;
 
@@ -55,7 +55,7 @@ const FOOTER = `
       </div>
       <div>
         <h4>Shop</h4>
-        <a href="/shop?category=rings">Rings</a><a href="/shop?category=necklaces">Necklaces</a><a href="/shop?category=earrings">Earrings</a><a href="/shop?category=pendants">Pendants</a><a href="/shop?category=bracelets">Bracelets</a><a href="/shop?category=gift-sets">Gift Sets</a><a href="/shop?sort=popular">Best Sellers</a>
+        <a href="/explore">Explore the collection</a><a href="/shop?category=rings">Rings</a><a href="/shop?category=necklaces">Necklaces</a><a href="/shop?category=earrings">Earrings</a><a href="/shop?category=pendants">Pendants</a><a href="/shop?category=bracelets">Bracelets</a><a href="/shop?category=gift-sets">Gift Sets</a><a href="/shop?sort=popular">Best Sellers</a>
       </div>
       <div>
         <h4>Support</h4>
@@ -108,6 +108,7 @@ const FOOTER = `
 </div>
 <nav class="mobile-tabbar" aria-label="Quick navigation">
   <a href="/" aria-label="Home"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round"><path d="m3 10 9-7 9 7v10a1 1 0 0 1-1 1h-5v-7H9v7H4a1 1 0 0 1-1-1z"/></svg><span>Home</span></a>
+  <a href="/explore" aria-label="Explore"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7"><path d="M12 3v18M3 12h18M5.6 5.6l12.8 12.8M18.4 5.6 5.6 18.4"/></svg><span>Explore</span></a>
   <button type="button" data-open-search aria-label="Search"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round"><circle cx="11" cy="11" r="7"/><path d="m20 20-4-4"/></svg><span>Search</span></button>
   <button type="button" data-open-cart aria-label="Cart"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round"><path d="M3 4h2l2.2 11.2a2 2 0 0 0 2 1.6h8.9a2 2 0 0 0 2-1.6L22 8H6"/><circle cx="10" cy="21" r="1"/><circle cx="18" cy="21" r="1"/></svg><span>Bag</span><i class="mobile-cart-count cart-count-badge" style="display:none">0</i></button>
   <a href="/account" aria-label="Account"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round"><circle cx="12" cy="8" r="4"/><path d="M4 21c0-4 3.6-6.5 8-6.5s8 2.5 8 6.5"/></svg><span>Account</span></a>
@@ -118,9 +119,5 @@ const FOOTER = `
   const footerMount = document.querySelector('[data-layout="footer"]');
   if (headerMount) headerMount.outerHTML = HEADER;
   if (footerMount) footerMount.outerHTML = FOOTER;
-  const track = document.getElementById('announceTrack');
-  if (track) {
-    const unit = '<span>✦ Free shipping above <b>₹999</b></span><span>Product details before you choose</span><span>See current offers at checkout</span>';
-    track.innerHTML = unit + unit; // duplicated for a seamless -50% loop
-  }
+  const experience = document.createElement('script'); experience.src = '/js/experience.js'; experience.defer = true; document.head.appendChild(experience);
 })();
