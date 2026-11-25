@@ -1,0 +1,30 @@
+/* Chandrahasa interaction layer: purposeful motion, in-session updates and mobile refresh. */
+(() => {
+ 'use strict';
+ const reduce=window.matchMedia('(prefers-reduced-motion: reduce)').matches;
+ const icon='<svg viewBox="0 0 24 24" aria-hidden="true" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round"><path d="M18 8a6 6 0 0 0-12 0c0 7-3 7-3 9h18c0-2-3-2-3-9"/><path d="M10 21h4"/></svg>';
+ const bell=document.createElement('button');bell.type='button';bell.className='ch-notify-trigger';bell.setAttribute('aria-label','Open recent updates');bell.innerHTML=icon+'<i aria-hidden="true"></i>';
+ const actions=document.querySelector('.nav-actions');if(actions)actions.appendChild(bell);
+ const panel=document.createElement('section');panel.className='ch-notify-panel';panel.hidden=true;panel.setAttribute('aria-label','Recent updates');panel.innerHTML='<div class="ch-notify-head"><strong>Recent updates</strong><button type="button" aria-label="Close updates">×</button></div><div class="ch-notify-list" aria-live="polite"><p class="ch-notify-empty">Your updates will appear here as you shop.</p></div>';
+ document.body.appendChild(panel);
+ const list=panel.querySelector('.ch-notify-list'),badge=bell.querySelector('i');let unread=0,items=[];
+ const add=(message,kind='info')=>{if(!message)return;items.unshift({message:String(message).slice(0,180),kind,time:new Date()});items=items.slice(0,12);unread++;badge.textContent=unread>9?'9+':String(unread);badge.classList.add('visible');list.innerHTML=items.map(x=>'<article class="ch-notify-item"><span class="ch-notify-dot '+(x.kind==='success'?'is-success':x.kind==='error'?'is-error':'')+'"></span><div><p></p><time></time></div></article>').join('');[...list.querySelectorAll('.ch-notify-item')].forEach((el,i)=>{el.querySelector('p').textContent=items[i].message;el.querySelector('time').textContent=items[i].time.toLocaleTimeString([], {hour:'2-digit',minute:'2-digit'});});};
+ bell.addEventListener('click',()=>{panel.hidden=!panel.hidden;if(!panel.hidden){unread=0;badge.classList.remove('visible');bell.setAttribute('aria-expanded','true');}else bell.setAttribute('aria-expanded','false');});
+ panel.querySelector('button').addEventListener('click',()=>{panel.hidden=true;bell.setAttribute('aria-expanded','false');});
+ document.addEventListener('keydown',e=>{if(e.key==='Escape'&&!panel.hidden){panel.hidden=true;bell.focus();}});
+ if(window.CH&&typeof CH.toast==='function'){const original=CH.toast.bind(CH);CH.toast=(message)=>{original(message);add(message,/failed|could not|error|unavailable/i.test(String(message))?'error':'success');};}
+ window.addEventListener('ch:notification',e=>add(e.detail?.message,e.detail?.kind));
+ // Progressive reveal: no content is hidden if JS or IntersectionObserver is unavailable.
+ if(!reduce&&'IntersectionObserver'in window){const observer=new IntersectionObserver(entries=>entries.forEach(entry=>{if(entry.isIntersecting){entry.target.classList.add('ch-in-view');observer.unobserve(entry.target);}}),{threshold:.08,rootMargin:'0px 0px -36px 0px'});document.querySelectorAll('main section, main .panel, .product-card, .cat-card, .feature-item').forEach(el=>{if(el.closest('.admin-shell'))return;el.classList.add('ch-reveal');observer.observe(el);});}
+ // Restrained pointer depth on desktop cards only.
+ if(!reduce&&window.matchMedia('(pointer:fine)').matches){document.addEventListener('pointermove',e=>{const card=e.target.closest('.product-card');if(!card)return;const r=card.getBoundingClientRect(),x=(e.clientX-r.left)/r.width-.5,y=(e.clientY-r.top)/r.height-.5;card.style.setProperty('--ch-tilt-x',(-y*2.2).toFixed(2)+'deg');card.style.setProperty('--ch-tilt-y',(x*2.2).toFixed(2)+'deg');});document.addEventListener('pointerout',e=>{const card=e.target.closest?.('.product-card');if(card){card.style.removeProperty('--ch-tilt-x');card.style.removeProperty('--ch-tilt-y');}});}
+ // Pull-to-refresh only at the top of the document, on touch devices; never hijack horizontal gestures.
+ let startY=0,startX=0,pulling=false,indicator=null;
+ if('ontouchstart'in window){indicator=document.createElement('div');indicator.className='ch-pull-indicator';indicator.setAttribute('role','status');indicator.textContent='↓ Pull to refresh';document.body.appendChild(indicator);
+ document.addEventListener('touchstart',e=>{if(window.scrollY>0||e.touches.length!==1)return;startY=e.touches[0].clientY;startX=e.touches[0].clientX;pulling=true;},{passive:true});
+ document.addEventListener('touchmove',e=>{if(!pulling||!indicator)return;const dy=e.touches[0].clientY-startY,dx=e.touches[0].clientX-startX;if(dy<0||Math.abs(dx)>Math.abs(dy)||window.scrollY>0){pulling=false;indicator.classList.remove('active');return;}if(dy>12){indicator.classList.add('active');indicator.style.setProperty('--pull',Math.min(1,dy/105));indicator.textContent=dy>88?'↑ Release to refresh':'↓ Pull to refresh';}},{passive:true});
+ document.addEventListener('touchend',()=>{if(!pulling)return;const ready=Number(indicator?.style.getPropertyValue('--pull')||0)>=.84;pulling=false;if(ready){indicator.textContent='Refreshing…';indicator.classList.add('refreshing');window.location.reload();}else indicator?.classList.remove('active');},{passive:true});}
+ // Button press response without changing business logic.
+ document.addEventListener('pointerdown',e=>{const b=e.target.closest('button,.btn');if(b&&!b.disabled)b.classList.add('ch-pressed');});
+ ['pointerup','pointercancel','pointerleave'].forEach(type=>document.addEventListener(type,e=>{const b=e.target.closest?.('button,.btn');b?.classList.remove('ch-pressed');}));
+})();
