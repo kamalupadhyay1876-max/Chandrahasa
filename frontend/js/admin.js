@@ -7,13 +7,30 @@ const fmt = CH.money;
 
 /* ── guard: admin only ── */
 (async function guard() {
+  const showAccessMessage = (message) => {
+    const main = $('.admin-main');
+    if (!main) return;
+    main.innerHTML = `<section class="admin-panel" role="alert" style="max-width:620px;margin:8vh auto;padding:32px">
+      <span class="kicker">Chandrahasa · Owner access</span>
+      <h1 class="h-serif" style="font-size:clamp(26px,4vw,38px)">Admin access required</h1>
+      <p style="line-height:1.7;color:var(--soft-ink)">${message}</p>
+      <a class="btn btn-dark" href="/login?next=%2Fadmin">Sign in to Admin</a>
+      <a href="/" style="display:inline-block;margin:16px;color:var(--soft-ink)">Return to storefront</a>
+    </section>`;
+  };
   try {
     const me = await CH.api('/api/auth/me');
-    if (!me.user || me.user.role !== 'admin') { window.location.href = '/login?next=/admin'; return; }
+    if (!me.user) { window.location.replace('/login?next=%2Fadmin'); return; }
+    if (me.user.role !== 'admin') {
+      showAccessMessage('You are signed in as a customer. This account does not have owner/admin privileges. Sign out and use the separately provisioned store-owner account.');
+      return;
+    }
     $('#adminWho').textContent = me.user.name + ' · ' + me.user.email;
     $('#adminGreeting').textContent = me.user.name.split(' ')[0];
     boot();
-  } catch { window.location.href = '/login?next=/admin'; }
+  } catch {
+    window.location.replace('/login?next=%2Fadmin');
+  }
 })();
 
 /* ── tab switching ── */

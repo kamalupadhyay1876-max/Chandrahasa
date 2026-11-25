@@ -324,16 +324,37 @@ async function route(req, res, pathname, query) {
 
   /* ── AUTH ───────────────────────────────── */
   if (pathname === '/api/auth/signup' && method === 'POST') {
-    if (rateLimited('signup:' + clientIp(req), 10, 600000)) return json(res, 429, { error: 'Too many attempts. Try again later.' });
+    if (rateLimited('signup:' + clientIp(req), 5, 600000)) return json(res, 429, { error: 'Too many attempts. Try again later.' });
     const name = clean(body?.name, 80), email = clean(body?.email, 254).toLowerCase(), phone = clean(body?.phone, 20), password = String(body?.password || '');
+    const ownerSetupKey = String(body?.ownerSetupKey || '');
     if (!name || !validEmail(email)) return json(res, 400, { error: 'Please provide a valid name and email.' });
-    if (password.length < 12 || password.length > 128) return json(res, 400, { error: 'Password must be 12–128 characters.' });
-    if (db.prepare('SELECT id FROM users WHERE email = ?').get(email)) return json(res, 409, { error: 'An account with this email already exists.' });
-    const salt = crypto.randomBytes(16).toString('hex');
-    const info = db.prepare('INSERT INTO users (name,email,phone,password_hash,salt,role) VALUES (?,?,?,?,?,?)')
-      .run(name, email, phone, scrypt(password, salt), salt, 'customer');
-    const { token, expires } = createSession(info.lastInsertRowid);
-    return json(res, 201, { user: { id: Number(info.lastInsertRowid), name, email, phone, role: 'customer' } }, { 'Set-Cookie': sessionCookie(token, expires) });
+    if (password.length < 16 || password.length > 128) return json(res, 400, { error: 'Password must be 16–128 characters.' });
+
+    // The first account is the only account that can become the store owner.
+    // BEGIN IMMEDIATE serializes concurrent first-signup attempts across requests.
+    const register = db.transaction(() => {
+      const accountCount = Number(db.prepare('SELECT COUNT(*) AS count FROM users').get().count);
+      const isFirstAccount = accountCount === 0;
+      if (isFirstAccount) {
+        const expectedKey = String(process.env.OWNER_SETUP_KEY || '');
+        if (expectedKey.length < 32 || !constantTimeEqual(ownerSetupKey, expectedKey)) {
+          return { error: 'Owner setup is locked. Enter the private owner setup key supplied for this store.' , status: 403 };
+        }
+      }
+      if (db.prepare('SELECT id FROM users WHERE email = ?').get(email)) {
+        return { error: 'An account with this email already exists.', status: 409 };
+      }
+      const role = isFirstAccount ? 'admin' : 'customer';
+      const salt = crypto.randomBytes(16).toString('hex');
+      const info = db.prepare('INSERT INTO users (name,email,phone,password_hash,salt,role) VALUES (?,?,?,?,?,?)')
+        .run(name, email, phone, scrypt(password, salt), salt, role);
+      const { token, expires } = createSession(info.lastInsertRowid);
+      if (isFirstAccount) auditLog(Number(info.lastInsertRowid), 'owner_bootstrap', 'user', info.lastInsertRowid, { method: 'first_signup' });
+      return { user: { id: Number(info.lastInsertRowid), name, email, phone, role }, token, expires, status: 201 };
+    });
+    const result = register.immediate();
+    if (result.error) return json(res, result.status, { error: result.error });
+    return json(res, result.status, { user: result.user }, { 'Set-Cookie': sessionCookie(result.token, result.expires) });
   }
 
   if (pathname === '/api/auth/login' && method === 'POST') {
