@@ -1,9 +1,13 @@
 name: Chandrahasa quality gates
 on:
   push:
-    branches: [main, feat/admin-control-backup-media]
+    branches: [main]
   pull_request:
     branches: [main]
+  workflow_dispatch:
+concurrency:
+  group: chandrahasa-quality-${{ github.ref }}
+  cancel-in-progress: true
 permissions:
   contents: read
 jobs:
