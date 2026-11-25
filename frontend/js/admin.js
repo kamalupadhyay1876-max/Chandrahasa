@@ -277,11 +277,11 @@ function renderOrdersBoard(orders){
   const host=$('#ordersKanban');if(!host)return;
   host.innerHTML=ORDER_LANES.map(([status,label])=>{
     const rows=orders.filter(o=>o.status===status);
-    return '<section class="orders-lane" data-drop-status="'+status+'"><div class="orders-lane-head"><strong>'+label+'</strong><span class="orders-lane-count">'+rows.length+'</span></div><div class="orders-lane-body">'+(rows.map(o=>{
+    return '<section class="orders-lane" data-drop-status="'+status+'"><div class="orders-lane-head"><strong>'+label+'</strong><span class="orders-lane-count">'+rows.length+'</span></div><div class="orders-lane-body">'+(rows.length ? rows.map(o=>{
       const customer=escapeAdminText((o.address&&o.address.name)||o.email||'Customer');
       const items=(o.items||[]).map(i=>escapeAdminText(i.name)+' ×'+Number(i.qty||1)).join(' · ');
       return '<article class="order-kanban-card" draggable="true" tabindex="0" data-drag-order="'+Number(o.id)+'" aria-label="Order '+Number(o.id)+', '+customer+'"><div class="order-kanban-top"><b>#CH'+Number(o.id)+'</b><span class="status-pill '+(o.payment_status==='paid'?'status-confirmed':'status-pending')+'">'+escapeAdminText(o.payment_method==='cod'?'COD':o.payment_status||'unpaid')+'</span></div><p><b>'+customer+'</b><br>'+items+'</p><div class="order-kanban-total">'+fmt(o.total)+'</div><select data-board-order="'+Number(o.id)+'" aria-label="Change status for order '+Number(o.id)+'">'+ORDER_STATUSES.map(s=>'<option value="'+s+'" '+(o.status===s?'selected':'')+'>'+s.replace(/_/g,' ')+'</option>').join('')+'</select></article>';
-    }).join(''):'<div class="order-kanban-empty">No orders in this stage</div>')+'</div></section>';
+    }).join('') : '<div class="order-kanban-empty">No orders in this stage</div>')+'</div></section>';
   }).join('');
 }
 let draggedOrderId=null;
@@ -314,7 +314,7 @@ $('#ordersKanban')?.addEventListener('drop',async e=>{
 $('#ordersKanban')?.addEventListener('change',e=>{
   const sel=e.target.closest('[data-board-order]');if(sel)saveBoardStatus(Number(sel.dataset.boardOrder),sel.value);
 });
-$$$('[data-orders-view]').forEach(btn=>btn.addEventListener('click',()=>{
+$('[data-orders-view]').forEach(btn=>btn.addEventListener('click',()=>{
   const mode=btn.dataset.ordersView;
   $$('[data-orders-view]').forEach(b=>b.classList.toggle('active',b===btn));
   $('#ordersKanban')?.classList.toggle('hidden',mode!=='board');
