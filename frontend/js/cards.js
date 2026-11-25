@@ -5,10 +5,10 @@ CH.escapeHTML = CH.escapeHTML || function escapeHTML(value) {
 };
 CH.productCardHTML = function productCardHTML(p) {
   const esc = CH.escapeHTML;
-  const img = p.images && p.images[0] ? p.images[0] : '';
+  const img = CH.safeImageUrl ? CH.safeImageUrl(p.images && p.images[0]) : '';
   const image = img
     ? `<img src="${esc(img)}" alt="${esc(p.name)}" loading="lazy" decoding="async">`
-    : `<div class="pc-image-empty" role="img" aria-label="Product image not available"><span>Image coming from catalogue</span></div>`;
+    : `<div class="pc-image-empty" role="img" aria-label="Product image not available"><span>CH</span></div>`;
   const discount = p.compare_price && p.compare_price > p.price ? Math.round((1 - p.price / p.compare_price) * 100) : 0;
   const badge = p.badge ? `<span class="pc-badge ${/SALE|OFFER|HOT/i.test(p.badge) ? 'gold' : ''}">${esc(p.badge)}</span>` : '';
   const compare = discount ? `<span class="pc-compare">${CH.money(p.compare_price)}</span><span class="pc-off">${discount}% off</span>` : '';
@@ -21,7 +21,7 @@ CH.productCardHTML = function productCardHTML(p) {
       <button class="pc-wishlist" data-wishlist="${esc(p.id)}" aria-label="Toggle wishlist"><svg viewBox="0 0 24 24" width="17" height="17" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round"><path d="M20.8 4.6a5.5 5.5 0 0 0-7.8 0L12 5.7l-1-1.1a5.5 5.5 0 0 0-7.8 7.8l1 1L12 21l7.8-7.6 1-1a5.5 5.5 0 0 0 0-7.8z"/></svg></button>
       <button class="pc-quick" data-add-to-cart="${esc(p.id)}" data-name="${esc(p.name)}" data-price="${Number(p.price)||0}" data-image="${esc(img)}" data-huid="${esc(p.huid||'')}" data-stock="${Number(p.stock)||0}" ${Number(p.stock)<=0?'disabled':''}>${Number(p.stock)>0?'Add to bag':'Unavailable'}</button>
     </div><div class="pc-body">${maker}<a href="/product?slug=${encodeURIComponent(p.slug || '')}" class="pc-title-link"><h3 class="pc-name">${esc(p.name)}</h3></a>${rating}
-      <div class="pc-price-row"><span class="pc-price">${CH.money(p.price)}</span>${compare}</div>${huid}
+      <div class="pc-price-row"><span class="pc-price">${CH.money(p.price)}</span>${compare}</div>${huid}<button type="button" class="btn btn-outline pc-compare-action" data-compare-product="${esc(p.id)}">Compare</button>
     </div></article>`;
 };
 CH.renderProductGrid = function renderProductGrid(selector, items) {

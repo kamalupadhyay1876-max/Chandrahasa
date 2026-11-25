@@ -14,6 +14,7 @@ function bindForm(formId, btnId, handler) {
   const errorBox = $('#authError');
   form.addEventListener('submit', async (e) => {
     e.preventDefault();
+    if (!form.reportValidity()) return;
     errorBox.classList.remove('show');
     const btn = $(btnId);
     const original = btn.textContent;
@@ -51,6 +52,7 @@ if (forgotForm) {
   const errorBox = $('#authError');
   forgotForm.addEventListener('submit', async (e) => {
     e.preventDefault();
+    if (!forgotForm.reportValidity()) return;
     errorBox.classList.remove('show');
     const email = $('#forgotEmail').value.trim();
     const btn = $('#forgotBtn'); btn.disabled = true; btn.innerHTML = '<span class="spinner"></span>Sending…';
@@ -74,9 +76,10 @@ const resetForm = document.querySelector('#resetForm');
 if (resetForm) {
   const token = new URLSearchParams(window.location.search).get('token') || '';
   const errorBox = $('#authError');
-  if (!token) { errorBox.textContent = 'This reset link is missing its token. Request a fresh one.'; errorBox.classList.add('show'); }
+  if (!token) { errorBox.textContent = 'This reset link is missing its token. Request a fresh one.'; errorBox.classList.add('show'); $('#resetBtn').disabled = true; }
   resetForm.addEventListener('submit', async (e) => {
     e.preventDefault();
+    if (!token || !resetForm.reportValidity()) return;
     errorBox.classList.remove('show');
     const p = $('#resetPassword').value, p2 = $('#resetPassword2').value;
     if (p !== p2) { errorBox.textContent = 'The two passwords do not match.'; errorBox.classList.add('show'); return; }

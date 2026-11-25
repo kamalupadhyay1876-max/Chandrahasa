@@ -4,6 +4,7 @@
 const params = new URLSearchParams(window.location.search);
 const state = {
   category: params.get('category') || 'all',
+  purity: params.get('purity') || '',
   search: (params.get('search') || '').trim(),
   sort: params.get('sort') || 'newest',
   min: params.get('min') || '',
@@ -25,6 +26,7 @@ const CAT_NAMES = { all: 'All Silver', rings: 'Rings', necklaces: 'Necklaces', e
 function syncUrl() {
   const q = new URLSearchParams();
   if (state.category !== 'all') q.set('category', state.category);
+  if (state.purity) q.set('purity', state.purity);
   if (state.search) q.set('search', state.search);
   if (state.sort !== 'newest') q.set('sort', state.sort);
   if (state.min) q.set('min', state.min);
@@ -51,6 +53,7 @@ async function loadCategories() {
 function buildQuery() {
   const q = new URLSearchParams();
   if (state.category !== 'all') q.set('category', state.category);
+  if (state.purity) q.set('purity', state.purity);
   if (state.search) q.set('search', state.search);
   q.set('sort', state.sort);
   if (state.min) q.set('min', state.min);
@@ -92,6 +95,11 @@ const priceChanged = () => {
 };
 minInput.addEventListener('input', priceChanged);
 maxInput.addEventListener('input', priceChanged);
+
+document.querySelectorAll('input[name="purity"]').forEach(input => {
+  input.checked = input.value === state.purity;
+  input.addEventListener('change', () => { state.purity = input.value; syncUrl(); fetchProducts(true); });
+});
 
 CH.$('#priceChips').addEventListener('click', (e) => {
   const btn = e.target.closest('[data-min]'); if (!btn) return;

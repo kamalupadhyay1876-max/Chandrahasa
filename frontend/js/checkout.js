@@ -26,7 +26,7 @@ async function loadSummary() {
   } else {
     const safe = value => String(value ?? '').replace(/[&<>"']/g, ch => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[ch]));
     wrap.innerHTML = state.items.map(i => {
-      const image = typeof i.image === 'string' && (/^\/(?:uploads|assets)\/[A-Za-z0-9_-]+(?:\/[A-Za-z0-9_.-]+)*$/.test(i.image) || /^https?:\/\/[^"'<>\\s]+$/i.test(i.image)) ? i.image : '';
+      const image = CH.safeImageUrl(i.image);
       const media = image ? `<img src="${safe(image)}" alt="${safe(i.name)}" loading="lazy">` : '<div class="summary-image-empty" aria-label="No product image available">CH</div>';
       return `<div class="summary-line">${media}
         <div style="flex:1"><b style="font-size:13px;color:var(--charcoal);display:block">${safe(i.name)}</b>
@@ -73,10 +73,48 @@ $('#couponForm').addEventListener('submit', (e) => { e.preventDefault(); applyCo
 $('#giftWrapChk').addEventListener('change', (e) => { state.giftWrap = e.target.checked; recalc(); });
 
 /* ── payment method toggle ── */
-$$('.pay-method').forEach(btn => btn.addEventListener('click', () => {
+CH.$$('.pay-method').forEach(btn => btn.addEventListener('click', () => {
   state.method = btn.dataset.method;
-  $$('.pay-method').forEach(b => { const on = b === btn; b.classList.toggle('active', on); b.setAttribute('aria-checked', String(on)); });
+  CH.$$('.pay-method').forEach(b => { const on = b === btn; b.classList.toggle('active', on); b.setAttribute('aria-checked', String(on)); });
 }));
+
+async function configureOnlinePayments() {
+  const button = $('[data-method="razorpay"]');
+  if (!button) return;
+  const note = button.querySelector('small');
+  button.disabled = true;
+  try {
+    const config = await CH.api('/api/payments/config');
+    if (!config.enabled) {
+      if (note) note.textContent = 'Gateway not configured · Cash on delivery available';
+      return;
+    }
+    if (!window.Razorpay) {
+      await new Promise((resolve, reject) => {
+        const existing = document.querySelector('script[data-razorpay-checkout]');
+        if (existing) {
+          existing.addEventListener('load', resolve, { once: true });
+          existing.addEventListener('error', reject, { once: true });
+          return;
+        }
+        const script = document.createElement('script');
+        script.src = 'https://checkout.razorpay.com/v1/checkout.js';
+        script.async = true;
+        script.dataset.razorpayCheckout = '1';
+        script.onload = resolve;
+        script.onerror = () => reject(new Error('Secure payment library could not load.'));
+        document.head.appendChild(script);
+      });
+    }
+    if (typeof window.Razorpay !== 'function') throw new Error('Secure payment library is unavailable.');
+    button.disabled = false;
+    if (note) note.textContent = 'UPI · Cards · Netbanking';
+  } catch {
+    button.disabled = true;
+    if (note) note.textContent = 'Online payment temporarily unavailable';
+  }
+}
+configureOnlinePayments();
 
 /* ── PIN code autofill (India Post) with graceful offline fallback ── */
 $('#coPincode').addEventListener('input', (e) => {
@@ -113,7 +151,11 @@ $('#checkoutForm').addEventListener('submit', async (e) => {
   errorBox.classList.remove('show');
   if (state.loadError) return showError('Your bag could not be loaded. Please retry before placing the order.');
   if (!state.items.length) return showError('Your bag is empty — add a piece before checking out.');
-  const email = $('#coEmail').value.trim(), phone = $('#coPhone').value.trim();
+  const phoneField = $('#coPhone'), pinField = $('#coPincode');
+  phoneField.setCustomValidity(/^[+]?[0-9 -]{10,15}$/.test(phoneField.value.trim()) ? '' : 'Enter a valid phone number (10–15 digits).');
+  pinField.setCustomValidity(/^[1-9][0-9]{5}$/.test(pinField.value.trim()) ? '' : 'Enter a valid 6-digit PIN code.');
+  if (!$('#checkoutForm').reportValidity()) return;
+  const email = $('#coEmail').value.trim(), phone = phoneField.value.trim();
   const address = { name: $('#coName').value.trim(), line1: $('#coLine1').value.trim(), line2: $('#coLine2').value.trim(), city: $('#coCity').value.trim(), state: $('#coState').value, pincode: $('#coPincode').value.trim() };
   const btn = $('#placeOrderBtn'); btn.disabled = true; btn.innerHTML = '<span class="spinner"></span>Placing your order…';
   try {

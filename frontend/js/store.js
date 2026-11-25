@@ -40,6 +40,19 @@ const CH = {
   },
 };
 
+// Only serve first-party image assets; external URLs are blocked by the production CSP.
+CH.safeImageUrl = function safeImageUrl(value) {
+  if (typeof value !== 'string') return '';
+  const raw = value.trim();
+  const allowedPath = p => /^\/(?:uploads\/[a-f0-9-]{36}\.(?:jpe?g|png|webp|gif)|assets\/[A-Za-z0-9_./-]+\.(?:jpe?g|png|webp|gif))$/i.test(p);
+  if (allowedPath(raw)) return raw;
+  try {
+    const url = new URL(raw, window.location.origin);
+    if (url.origin !== window.location.origin || !['http:','https:'].includes(url.protocol)) return '';
+    return allowedPath(url.pathname) ? url.pathname : '';
+  } catch { return ''; }
+};
+
 /* ──────────────────────── STATE ─────────────────────────── */
 const CH_STATE = { user: null, guestCart: null, serverCart: null, wishlistIds: new Set(), loaded: false, cartError: null };
 CH_STATE.ready = new Promise(resolve => { CH_STATE.resolveReady = resolve; });
@@ -121,7 +134,7 @@ function renderShipBar(subtotal) {
 
 function cartLineHTML(i) {
   const safeAttr = value => String(value ?? '').replace(/[&<>"']/g, ch => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[ch]));
-  const image = typeof i.image === 'string' && (/^\/(?:uploads|assets)\/[A-Za-z0-9_-]+(?:\/[A-Za-z0-9_.-]+)*$/.test(i.image) || /^https?:\/\/[^"'<>\\s]+$/i.test(i.image)) ? i.image : '';
+  const image = CH.safeImageUrl(i.image);
   const compare = i.compare_price && i.compare_price > i.price ? `<span class="pc-compare">${CH.money(i.compare_price)}</span>` : '';
   return `<div class="cart-line" data-line="${i.productId}" data-size="${i.size || ''}">
     ${image ? `<img src="${safeAttr(image)}" alt="${safeAttr(i.name)}" loading="lazy">` : '<div class="cart-image-empty" aria-label="No product image available">CH</div>'}
@@ -206,13 +219,16 @@ document.addEventListener('DOMContentLoaded', async () => {
     const btn = e.target.closest('[data-add-to-cart]');
     if (!btn) return;
     e.preventDefault(); e.stopPropagation();
+    const productCard = btn.closest('.product-card');
+    const cardImage = productCard?.querySelector('.pc-media img');
+    const productImage = btn.dataset.image || cardImage?.currentSrc || cardImage?.getAttribute('src') || '';
     const payload = {
       productId: Number(btn.dataset.addToCart),
       qty: 1,
       size: btn.dataset.size || '',
-      name: btn.dataset.name || 'Chandrahasa Piece',
+      name: btn.dataset.name || productCard?.querySelector('.pc-name')?.textContent?.trim() || 'Chandrahasa Piece',
       price: Number(btn.dataset.price || 0),
-      image: btn.dataset.image || '',
+      image: CH.safeImageUrl(productImage),
       huid: btn.dataset.huid || '',
       stock: Number(btn.dataset.stock || 99),
     };
@@ -302,7 +318,8 @@ document.addEventListener('DOMContentLoaded', async () => {
           const items = Array.isArray(d.items) ? d.items : [];
           results.innerHTML = items.length ? items.map(p => {
             const name = CH.escapeHTML ? CH.escapeHTML(p.name) : String(p.name || 'Product');
-            const image = p.images?.[0] ? `<img src="${CH.escapeHTML(p.images[0])}" alt="" loading="lazy">` : '<span class="search-no-image" aria-hidden="true">CH</span>' ;
+            const imageUrl = CH.safeImageUrl(p.images?.[0]);
+            const image = imageUrl ? `<img src="${CH.escapeHTML(imageUrl)}" alt="" loading="lazy">` : '<span class="search-no-image" aria-hidden="true">CH</span>' ;
             return `<a class="sr-item" href="/product?slug=${encodeURIComponent(p.slug || '')}">${image}<span><b>${name}</b><span class="sr-price">${CH.money(p.price)}</span></span></a>`;
           }).join('') + `<a class="search-all" href="/shop?search=${encodeURIComponent(q)}">View all results for “${CH.escapeHTML(q)}” →</a>` : '<p class="search-empty">No matching pieces in the live catalogue. Try another term.</p>';
         } catch (err) {
@@ -371,3 +388,20 @@ async function applyStoreCustomizations(){
 }
 if(document.readyState==='loading')document.addEventListener('DOMContentLoaded',applyStoreCustomizations,{once:true});else applyStoreCustomizations();
 setInterval(()=>{if(!document.hidden)applyStoreCustomizations();},60000);
+
+/* Product comparison: collect up to four catalogue IDs and open the comparison table. */
+document.addEventListener('click', event => {
+  const button = event.target.closest('[data-compare-product]');
+  if (!button) return;
+  const id = Number(button.dataset.compareProduct);
+  if (!Number.isSafeInteger(id) || id < 1) return;
+  let ids = [];
+  try { ids = JSON.parse(localStorage.getItem('ch_compare_ids') || '[]'); } catch { ids = []; }
+  ids = Array.isArray(ids) ? ids.map(Number).filter(value => Number.isSafeInteger(value) && value > 0).slice(0,4) : [];
+  if (!ids.includes(id)) {
+    if (ids.length >= 4) { CH.toast('Compare up to four pieces at a time.'); return; }
+    ids.push(id);
+  }
+  try { localStorage.setItem('ch_compare_ids', JSON.stringify(ids)); } catch { CH.toast('Comparison could not be saved in this browser.'); return; }
+  window.location.href = '/compare?ids=' + encodeURIComponent(ids.join(','));
+});

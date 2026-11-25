@@ -89,3 +89,7 @@ button:disabled,[aria-disabled="true"]{cursor:not-allowed;opacity:.58}
 .summary-line img,.summary-image-empty{width:64px;height:64px;object-fit:cover;border-radius:8px;background:#eee5d2;flex:0 0 64px}
 .summary-image-empty{display:grid;place-items:center;color:#89672d;font-family:var(--font-display,Georgia,serif);letter-spacing:.12em;font-size:13px;border:1px solid rgba(137,103,45,.22)}
 @media(prefers-reduced-motion:reduce){*{scroll-behavior:auto}}
+
+/* Accessible labels for dynamically generated customer forms. */
+.feature-field{display:grid;gap:6px;font-size:12px;font-weight:600;color:var(--charcoal)}
+.feature-field span{line-height:1.35}
