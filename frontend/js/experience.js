@@ -1,6 +1,7 @@
 /* Chandrahasa interaction layer: purposeful motion, in-session updates and mobile refresh. */
 (() => {
  'use strict';
+ const motionCss=document.createElement('link');motionCss.rel='stylesheet';motionCss.href='/css/experience.css';document.head.appendChild(motionCss);
  const reduce=window.matchMedia('(prefers-reduced-motion: reduce)').matches;
  const icon='<svg viewBox="0 0 24 24" aria-hidden="true" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round"><path d="M18 8a6 6 0 0 0-12 0c0 7-3 7-3 9h18c0-2-3-2-3-9"/><path d="M10 21h4"/></svg>';
  const bell=document.createElement('button');bell.type='button';bell.className='ch-notify-trigger';bell.setAttribute('aria-label','Open recent updates');bell.innerHTML=icon+'<i aria-hidden="true"></i>';
