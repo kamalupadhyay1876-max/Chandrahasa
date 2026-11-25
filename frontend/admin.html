@@ -17,6 +17,7 @@
       <a class="admin-link" href="/admin-operations.html">Operations</a>
       <a class="admin-link" href="/admin-marketplace.html">Marketplace Ops</a>
       <a class="admin-link active" href="#overview" data-admin-tab="overview"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round"><path d="M3 3v18h18"/><path d="M7 14l4-4 4 4 5-6"/></svg>Overview</a>
+      <a class="admin-link" href="#categories" data-admin-tab="categories">Categories</a>
       <a class="admin-link" href="#products" data-admin-tab="products"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round"><path d="M20 7l-8-4-8 4v10l8 4 8-4z"/><path d="M4 7l8 4 8-4M12 11v10"/></svg>Products</a>
       <a class="admin-link" href="#orders" data-admin-tab="orders"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round"><path d="M6 2h12v20l-3-2-3 2-3-2-3 2z"/><path d="M9 7h6M9 11h6"/></svg>Orders</a>
       <a class="admin-link" href="#customers" data-admin-tab="customers"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round"><circle cx="9" cy="8" r="3.5"/><path d="M2.5 20c0-3.6 3-6 6.5-6s6.5 2.4 6.5 6"/><circle cx="17.5" cy="9.5" r="2.6"/><path d="M15.5 14.3c3.2.5 5.5 2.8 5.5 5.7"/></svg>Customers</a>
@@ -59,6 +60,23 @@
           </div>
         </div>
         <div style="overflow-x:auto"><table class="admin-table" id="productsTable"><thead><tr><th></th><th>Piece</th><th>Category</th><th>Price</th><th>Stock</th><th>HUID</th><th>Active</th><th></th></tr></thead><tbody></tbody></table></div>
+      </div>
+    </section>
+
+    <!-- CATEGORIES -->
+    <section id="tab-categories" class="admin-tab hidden">
+      <div class="admin-panel">
+        <h2>Catalogue categories</h2>
+        <p style="color:var(--soft-ink);font-size:13px;line-height:1.6">Create and manage the categories used by the product editor and storefront. Product categories are loaded from the live database.</p>
+        <form id="categoryForm" style="display:grid;grid-template-columns:repeat(auto-fit,minmax(180px,1fr));gap:10px;align-items:end;margin:16px 0">
+          <input type="hidden" id="catId">
+          <div class="field"><label for="catName">Category name *</label><input id="catName" required maxlength="80" placeholder="Rings"></div>
+          <div class="field"><label for="catSlug">URL slug</label><input id="catSlug" maxlength="80" placeholder="rings"></div>
+          <div class="field"><label for="catImage">Image path or URL</label><input id="catImage" maxlength="500" placeholder="/assets/img/rings.webp"></div>
+          <div class="field"><label for="catOrder">Sort order</label><input id="catOrder" type="number" value="0"></div>
+          <div style="display:flex;gap:8px"><button class="btn btn-dark btn-sm" type="submit" id="catSaveBtn">Save category</button><button class="btn btn-outline btn-sm" type="button" id="catCancelBtn">Clear</button></div>
+        </form>
+        <div style="overflow-x:auto"><table class="admin-table" id="categoriesTable"><thead><tr><th>Category</th><th>Slug</th><th>Image</th><th>Sort</th><th>Actions</th></tr></thead><tbody></tbody></table></div>
       </div>
     </section>
 
@@ -110,7 +128,7 @@
       <input type="hidden" id="pfId">
       <div class="field"><label for="pfName">Name *</label><input id="pfName" required placeholder="Floral Silver Ring"></div>
       <div class="field-row">
-        <div class="field"><label for="pfCategory">Category *</label><select id="pfCategory" required><option value="rings">Rings</option><option value="necklaces">Necklaces</option><option value="earrings">Earrings</option><option value="pendants">Pendants</option><option value="bracelets">Bracelets</option><option value="gift-sets">Gift Sets</option></select></div>
+        <div class="field"><label for="pfCategory">Category *</label><select id="pfCategory" required><option value="">Loading categories…</option></select></div>
         <div class="field"><label for="pfBadge">Badge</label><input id="pfBadge" placeholder="NEW / HOT / SALE…" maxlength="20"></div>
       </div>
       <div class="field-row">
