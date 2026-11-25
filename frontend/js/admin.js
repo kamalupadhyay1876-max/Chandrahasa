@@ -39,13 +39,58 @@ $$('[data-admin-tab]').forEach(link => link.addEventListener('click', (e) => {
   const tab = link.dataset.adminTab;
   $$('[data-admin-tab]').forEach(l => l.classList.toggle('active', l === link));
   $$('.admin-tab').forEach(s => s.classList.toggle('hidden', s.id !== 'tab-' + tab));
-  if (tab === 'products') loadProducts();
+  if (tab === 'products') { loadCategories().then(loadProducts); }
+  if (tab === 'categories') loadCategories();
   if (tab === 'orders') loadOrders();
   if (tab === 'customers') loadCustomers();
   if (tab === 'coupons') loadCoupons();
 }));
 
-function boot() { loadStats(); }
+function boot() { loadStats(); loadCategories(); startAdminLiveRefresh(); }
+
+let adminRefreshTimer = null;
+function startAdminLiveRefresh() {
+  if (adminRefreshTimer) clearInterval(adminRefreshTimer);
+  adminRefreshTimer = setInterval(() => {
+    if (document.hidden) return;
+    const active = $('.admin-tab:not(.hidden)')?.id;
+    if (active === 'tab-overview') loadStats();
+    if (active === 'tab-products') loadProducts($('#productSearch')?.value.trim() || '');
+    if (active === 'tab-categories') loadCategories();
+    if (active === 'tab-orders') loadOrders($('#orderStatusFilter')?.value || 'all');
+    if (active === 'tab-customers') loadCustomers();
+    if (active === 'tab-coupons') loadCoupons();
+  }, 20000);
+}
+
+let allCategories = [];
+async function loadCategories() {
+  const data = await CH.api('/api/admin/categories');
+  allCategories = data.categories || [];
+  const select = $('#pfCategory');
+  if (select) {
+    const selected = select.value;
+    select.innerHTML = '<option value="">Choose category…</option>' + allCategories.map(c => `<option value="${String(c.slug).replace(/&/g,"&amp;").replace(/"/g,"&quot;")}">${String(c.name).replace(/&/g,"&amp;").replace(/</g,"&lt;")}</option>`).join('');
+    if (allCategories.some(c => c.slug === selected)) select.value = selected;
+  }
+  const tbody = $('#categoriesTable tbody');
+  if (tbody) tbody.innerHTML = allCategories.map(c => `<tr><td><b>${escapeAdminText(c.name)}</b></td><td>${escapeAdminText(c.slug)}</td><td>${escapeAdminText(c.image || '')}</td><td>${Number(c.sort_order)||0}</td><td><button class="btn btn-outline btn-sm" data-cat-edit="${c.id}">Edit</button> <button class="btn btn-outline btn-sm" data-cat-delete="${c.id}">Delete</button></td></tr>`).join('') || '<tr><td colspan="5">No categories yet. Create your first category above.</td></tr>';
+  return allCategories;
+}
+function escapeAdminText(value) { return String(value ?? '').replace(/[&<>"']/g, ch => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[ch])); }
+$('#categoryForm')?.addEventListener('submit', async e => {
+  e.preventDefault();
+  const id=$('#catId').value, name=$('#catName').value.trim();
+  const payload={name,slug:$('#catSlug').value.trim(),image:$('#catImage').value.trim(),sort_order:Number($('#catOrder').value)||0};
+  try { await CH.api(id ? '/api/admin/categories/'+id : '/api/admin/categories',{method:id?'PUT':'POST',body:payload}); $('#categoryForm').reset(); $('#catId').value=''; $('#catOrder').value='0'; await loadCategories(); CH.toast('Category saved'); }
+  catch(err){CH.toast(err.message);}
+});
+$('#catCancelBtn')?.addEventListener('click',()=>{ $('#categoryForm').reset(); $('#catId').value=''; $('#catOrder').value='0'; });
+$('#categoriesTable')?.addEventListener('click',async e=>{
+  const edit=e.target.closest('[data-cat-edit]'), del=e.target.closest('[data-cat-delete]');
+  if(edit){const c=allCategories.find(x=>x.id===Number(edit.dataset.catEdit));if(!c)return;$('#catId').value=c.id;$('#catName').value=c.name;$('#catSlug').value=c.slug;$('#catImage').value=c.image||'';$('#catOrder').value=c.sort_order||0;$('#catSaveBtn').textContent='Update category';}
+  if(del){if(!confirm('Delete this category? Categories containing products cannot be deleted.'))return;try{await CH.api('/api/admin/categories/'+del.dataset.catDelete,{method:'DELETE'});await loadCategories();CH.toast('Category deleted');}catch(err){CH.toast(err.message);}}
+});
 
 /* ══════════ OVERVIEW ══════════ */
 async function loadStats() {
@@ -115,6 +160,7 @@ $('#productsTable')?.addEventListener('click', async (e) => {
   if (editBtn) {
     const p = allProducts.find(x => x.id === Number(editBtn.dataset.edit));
     if (!p) return;
+    await loadCategories();
     $('#pfId').value = p.id;
     $('#pfName').value = p.name; $('#pfCategory').value = p.category_slug; $('#pfBadge').value = p.badge || '';
     $('#pfPrice').value = p.price; $('#pfCompare').value = p.compare_price || ''; $('#pfStock').value = p.stock;
@@ -130,8 +176,10 @@ $('#productsTable')?.addEventListener('click', async (e) => {
     loadProducts($('#productSearch').value.trim());
   }
 });
-$('#addProductBtn')?.addEventListener('click', () => {
+$('#addProductBtn')?.addEventListener('click', async () => {
+  await loadCategories();
   $('#productForm').reset(); $('#pfId').value = ''; $('#productModalTitle').textContent = 'Add a new piece';
+  if (!allCategories.length) { CH.toast('Create a category first in the Categories section.'); return; }
   $('#productModal').classList.add('open');
 });
 $('#cancelProductBtn')?.addEventListener('click', () => $('#productModal').classList.remove('open'));
