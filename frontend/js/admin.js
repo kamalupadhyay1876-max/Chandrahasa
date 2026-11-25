@@ -316,7 +316,7 @@ $('#ordersKanban')?.addEventListener('change',e=>{
 });
 $$('[data-orders-view]').forEach(btn=>btn.addEventListener('click',()=>{
   const mode=btn.dataset.ordersView;
-  $$$('[data-orders-view]').forEach(b=>b.classList.toggle('active',b===btn));
+  $$('[data-orders-view]').forEach(b=>b.classList.toggle('active',b===btn));
   $('#ordersKanban')?.classList.toggle('hidden',mode!=='board');
   $('#ordersListView')?.classList.toggle('hidden',mode!=='list');
   if(mode==='board')loadOrders('all');
