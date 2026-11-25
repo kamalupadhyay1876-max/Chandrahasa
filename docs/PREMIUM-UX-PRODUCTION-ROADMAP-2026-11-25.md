@@ -84,3 +84,18 @@ Build a premium, clear, fast and dependable jewellery storefront with a focused 
 ## Explicitly not claimed complete
 
 This branch now includes the listed visual and interaction changes, but it still does not implement every item above. Payment-provider credentials, live refund/shipping flows, authenticated end-to-end Admin CRUD, media upload/restore drills, full settings-to-storefront rendering, load testing and independent penetration testing must each be verified separately. Keep SQLite single-writer deployment constraints unless a tested database migration is completed.
+
+
+## Additional polish pass — 25 November 2026
+
+- Removed the announcement-strip element from the shared injected header; no scrolling banner is rendered.
+- Refined the shared header with clearer brand hierarchy, stronger icon contrast, improved search affordance, navigation spacing and responsive mobile menu styling.
+- Refined the shared footer with higher-contrast typography, more deliberate column spacing and accessible mobile stacking.
+- Removed the generic rings.webp fallback from cart drawer rows. Cart thumbnails now use only the product image carried by the cart record; when no image exists, a neutral CH placeholder is shown instead of an unrelated jewellery photo.
+- Added the same product-specific image treatment to the dedicated cart page.
+- Kept the existing reduced-motion and keyboard-focus rules.
+- Added source-audit checks for banner removal, Explore/Contact navigation, product-specific cart media and header/footer accessibility styles.
+
+## Validation status for this pass
+
+The changes are committed to the upgrade branch. GitHub Actions and live-browser verification must pass before merge. This is a UI/media correctness update; it does not configure payment credentials or certify the wider payment, shipping, security, recovery or load-testing workstreams.
