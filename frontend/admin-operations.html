@@ -24,7 +24,7 @@ body{background:#f2ede2}.ops{max-width:1200px;margin:32px auto;padding:20px}.ops
 (async()=>{
 const api=async(path,opt={})=>CH.api(path,opt);
 const esc=s=>String(s??'').replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
-try{const me=await api('/api/auth/me');if(!me.user||me.user.role!=='admin'){location.href='/login?next=/admin-operations';return;}document.querySelector('.ops').hidden=false;}catch{location.href='/login?next=/admin-operations';return;}
+try{const me=await api('/api/auth/me');if(!me.user||me.user.role!=='admin'){location.href='/login?next=/admin-operations';return;}}catch{location.href='/login?next=/admin-operations';return;}
 async function load(){
 const [cats,contacts,news,reviews,audit,settings,orders,outbox]=await Promise.all([api('/api/admin/categories'),api('/api/admin/contacts'),api('/api/admin/newsletter'),api('/api/admin/reviews'),api('/api/admin/audit-log'),api('/api/admin/settings'),api('/api/admin/orders'),api('/api/admin/notifications/outbox')]);
 document.querySelector('#fulfillmentOrder').innerHTML='<option value=\"\">Select order…</option>'+orders.orders.map(o=>`<option value=\"${o.id}\">#${o.id} · ${esc(o.email)} · ₹${o.total} · ${esc(o.status)}</option>`).join('');
@@ -47,4 +47,4 @@ document.querySelector('#refreshNotifications').addEventListener('click',load);
 document.querySelector('#notificationList').addEventListener('click',async e=>{const b=e.target.closest('[data-notify-retry]');if(!b)return;if(!confirm('Retry this notification event now?'))return;try{await api('/api/admin/notifications/outbox/retry',{method:'POST',body:{id:Number(b.dataset.notifyRetry)}});await load();}catch(err){alert(err.message);}});
 await load();
 })();
-</script><script src="/js/admin-backups.js" defer></script></body></html>
+</script><script src="/js/admin-backups.js" defer></script><script src="/js/admin-route-guard.js" defer></script></body></html>
