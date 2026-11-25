@@ -34,7 +34,7 @@ async function createBackup() {
   if (fs.existsSync(uploadDir) && fs.statSync(uploadDir).isDirectory()) {
     const mediaPath = target.replace(/\.sqlite$/, '.media.tar.gz');
     await execFileAsync('tar', ['-czf', mediaPath, '-C', uploadDir, '.']);
-    await execFileAsync('tar', ['-tzf', mediaPath]);
+    await execFileAsync('tar', ['-tzf', mediaPath], { maxBuffer: 10 * 1024 * 1024 });
     const mediaDigest = crypto.createHash('sha256').update(fs.readFileSync(mediaPath)).digest('hex');
     fs.writeFileSync(`${mediaPath}.sha256`, `${mediaDigest}  ${path.basename(mediaPath)}\n`, { mode: 0o600 });
     mediaArchive = { file: mediaPath, sha256: mediaDigest, bytes: fs.statSync(mediaPath).size };
