@@ -236,6 +236,9 @@ const productRow = (p) => ({
   is_active: !!p.is_active,
 });
 
+// Hide obvious seed/demo catalogue records from customer-facing discovery; keep owner data intact.
+const PUBLIC_CATALOG_FILTER = "(lower(name) NOT LIKE 'demo%' AND lower(name) NOT LIKE 'test%' AND lower(name) NOT LIKE 'sample%' AND lower(name) <> 'hii')";
+
 function auditLog(userId, action, entity, entityId, details = {}) {
   try { db.prepare('INSERT INTO admin_audit_log (user_id, action, entity, entity_id, details) VALUES (?,?,?,?,?)')
     .run(userId || null, action, entity, String(entityId ?? ''), JSON.stringify(details)); } catch {}
@@ -453,7 +456,7 @@ async function route(req, res, pathname, query) {
   /* ── CATALOG ────────────────────────────── */
   if (pathname === '/api/categories' && method === 'GET') {
     const rows = db.prepare('SELECT name, slug, image, sort_order FROM categories ORDER BY sort_order').all();
-    const counts = db.prepare('SELECT category_slug, COUNT(*) n FROM products WHERE is_active = 1 GROUP BY category_slug').all();
+    const counts = db.prepare(`SELECT category_slug, COUNT(*) n FROM products WHERE is_active = 1 AND ${PUBLIC_CATALOG_FILTER} GROUP BY category_slug`).all();
     const map = Object.fromEntries(counts.map(c => [c.category_slug, c.n]));
     const grouped = new Map();
     for (const row of rows) {
@@ -483,7 +486,7 @@ async function route(req, res, pathname, query) {
     const sort = query.get('sort') || 'newest';
     const page = Math.max(1, toInt(query.get('page'), 1));
     const limit = Math.min(48, Math.max(1, toInt(query.get('limit'), 24)));
-    let where = 'WHERE is_active = 1 AND price BETWEEN ? AND ?';
+    let where = `WHERE is_active = 1 AND ${PUBLIC_CATALOG_FILTER} AND price BETWEEN ? AND ?`;
     const args = [min, max];
     if (category && category !== 'all') {
       const canonicalFilter = storefrontCategory(category, category);
@@ -508,12 +511,12 @@ async function route(req, res, pathname, query) {
 
   let m;
   if ((m = pathname.match(/^\/api\/products\/([a-z0-9-]+)$/)) && method === 'GET') {
-    const row = db.prepare('SELECT * FROM products WHERE slug = ? AND is_active = 1').get(m[1]);
+    const row = db.prepare(`SELECT * FROM products WHERE slug = ? AND is_active = 1 AND ${PUBLIC_CATALOG_FILTER}`).get(m[1]);
     if (!row) return json(res, 404, { error: 'Product not found.' });
     const product = productRow(row);
     const seller = db.prepare("SELECT s.id,s.name FROM seller_products sp JOIN sellers s ON s.id=sp.seller_id WHERE sp.product_id=? AND sp.status='active' AND s.status='approved' ORDER BY sp.id LIMIT 1").get(row.id)||null;
     const reviews = db.prepare('SELECT author, rating, title, body, created_at FROM reviews WHERE product_id = ? ORDER BY created_at DESC LIMIT 20').all(row.id);
-    const related = db.prepare('SELECT * FROM products WHERE category_slug = ? AND id != ? AND is_active = 1 ORDER BY review_count DESC LIMIT 4').all(row.category_slug, row.id).map(productRow);
+    const related = db.prepare(`SELECT * FROM products WHERE category_slug = ? AND id != ? AND is_active = 1 AND ${PUBLIC_CATALOG_FILTER} ORDER BY review_count DESC LIMIT 4`).all(row.category_slug, row.id).map(productRow);
     return json(res, 200, { product:{...product,seller}, reviews, related });
   }
 
@@ -1129,15 +1132,15 @@ async function route(req, res, pathname, query) {
   }
   if (pathname==='/api/questions' && method==='GET') { const pid=toInt(query.get('productId')); return json(res,200,{questions:db.prepare("SELECT q.id,q.question,q.answer,q.created_at,u.name AS asker FROM product_questions q LEFT JOIN users u ON u.id=q.user_id WHERE q.product_id=? AND q.status='answered' ORDER BY q.id DESC").all(pid)}); }
   if (pathname==='/api/questions' && method==='POST') { if(!user) return json(res,401,{error:'Sign in to ask a product question.'}); const pid=toInt(body?.productId),q=clean(body?.question,700); if(!db.prepare('SELECT id FROM products WHERE id=? AND is_active=1').get(pid)||q.length<8) return json(res,400,{error:'Choose a product and enter a question (8+ characters).'}); const r=db.prepare('INSERT INTO product_questions(product_id,user_id,question) VALUES(?,?,?)').run(pid,user.id,q); return json(res,201,{id:Number(r.lastInsertRowid),status:'pending'}); }
-  if (pathname==='/api/compare' && method==='GET') { const ids=(query.get('ids')||'').split(',').map(x=>toInt(x)).filter(Boolean).slice(0,4); if(!ids.length)return json(res,200,{products:[]}); const rows=db.prepare(`SELECT id,slug,name,category_slug,description,price,compare_price,images,huid,purity,weight,stock,rating,review_count FROM products WHERE id IN (${ids.map(()=>'?').join(',')}) AND is_active=1`).all(...ids).map(productRow); return json(res,200,{products:rows}); }
-  if (pathname==='/api/recommendations' && method==='GET') { const pid=toInt(query.get('productId')); const p=db.prepare('SELECT * FROM products WHERE id=?').get(pid); const recent=user?db.prepare('SELECT query FROM search_events WHERE user_id=? ORDER BY id DESC LIMIT 12').all(user.id):[]; const terms=recent.map(x=>x.query.toLowerCase()); const rows=db.prepare('SELECT * FROM products WHERE is_active=1 AND id<>? ORDER BY rating DESC,review_count DESC LIMIT 100').all(pid||0); const base=p?db.prepare('SELECT embedding_json FROM product_embeddings WHERE product_id=?').get(pid):null; if(base){const v=JSON.parse(base.embedding_json);const ranked=rows.map(x=>{const e=db.prepare('SELECT embedding_json FROM product_embeddings WHERE product_id=?').get(x.id);return {...x,_score:(e?cosineSimilarity(v,JSON.parse(e.embedding_json)):0)*100+Number(x.rating||0)*0.25};}).sort((a,b)=>b._score-a._score).slice(0,8);return json(res,200,{mode:'semantic-vector+quality',aiEmbedding:true,products:ranked.map(productRow)});} const pcat=p?.category_slug; const ranked=rows.map(x=>({...x,_score:(pcat&&x.category_slug===pcat?8:0)+Number(x.rating||0)*2+Math.min(5,Number(x.review_count||0)/10)+(terms.some(t=>(x.name+' '+x.description+' '+x.category_slug).toLowerCase().includes(t))?6:0)})).sort((a,b)=>b._score-a._score).slice(0,8); return json(res,200,{mode:'hybrid-catalogue-personalization',aiEmbedding:false,products:ranked.map(productRow)}); }
+  if (pathname==='/api/compare' && method==='GET') { const ids=(query.get('ids')||'').split(',').map(x=>toInt(x)).filter(Boolean).slice(0,4); if(!ids.length)return json(res,200,{products:[]}); const rows=db.prepare(`SELECT id,slug,name,category_slug,description,price,compare_price,images,huid,purity,weight,stock,rating,review_count FROM products WHERE id IN (${ids.map(()=>'?').join(',')}) AND is_active=1 AND ${PUBLIC_CATALOG_FILTER}`).all(...ids).map(productRow); return json(res,200,{products:rows}); }
+  if (pathname==='/api/recommendations' && method==='GET') { const pid=toInt(query.get('productId')); const p=db.prepare('SELECT * FROM products WHERE id=?').get(pid); const recent=user?db.prepare('SELECT query FROM search_events WHERE user_id=? ORDER BY id DESC LIMIT 12').all(user.id):[]; const terms=recent.map(x=>x.query.toLowerCase()); const rows=db.prepare('SELECT * FROM products WHERE is_active=1 AND ${PUBLIC_CATALOG_FILTER} AND id<>? ORDER BY rating DESC,review_count DESC LIMIT 100').all(pid||0); const base=p?db.prepare('SELECT embedding_json FROM product_embeddings WHERE product_id=?').get(pid):null; if(base){const v=JSON.parse(base.embedding_json);const ranked=rows.map(x=>{const e=db.prepare('SELECT embedding_json FROM product_embeddings WHERE product_id=?').get(x.id);return {...x,_score:(e?cosineSimilarity(v,JSON.parse(e.embedding_json)):0)*100+Number(x.rating||0)*0.25};}).sort((a,b)=>b._score-a._score).slice(0,8);return json(res,200,{mode:'semantic-vector+quality',aiEmbedding:true,products:ranked.map(productRow)});} const pcat=p?.category_slug; const ranked=rows.map(x=>({...x,_score:(pcat&&x.category_slug===pcat?8:0)+Number(x.rating||0)*2+Math.min(5,Number(x.review_count||0)/10)+(terms.some(t=>(x.name+' '+x.description+' '+x.category_slug).toLowerCase().includes(t))?6:0)})).sort((a,b)=>b._score-a._score).slice(0,8); return json(res,200,{mode:'hybrid-catalogue-personalization',aiEmbedding:false,products:ranked.map(productRow)}); }
   if (pathname==='/api/semantic-search' && method==='GET') {
     if(rateLimited('semantic-search:'+clientIp(req),20,60000))return json(res,429,{error:'Search limit reached. Try again shortly.'});
     const q=clean(query.get('q'),300);if(q.length<3)return json(res,200,{products:[],mode:'semantic'});
     if(!process.env.OPENAI_API_KEY)return json(res,503,{error:'Semantic search is not configured. Set OPENAI_API_KEY and build product embeddings.'});
     try{const vector=await createEmbedding(q),rows=db.prepare('SELECT p.*,e.embedding_json FROM product_embeddings e JOIN products p ON p.id=e.product_id WHERE p.is_active=1').all();const ranked=rows.map(x=>({...x,_score:cosineSimilarity(vector,JSON.parse(x.embedding_json))})).sort((a,b)=>b._score-a._score).slice(0,20);if(user)db.prepare('INSERT INTO search_events(user_id,query) VALUES(?,?)').run(user.id,q);return json(res,200,{mode:'semantic-vector',products:ranked.map(productRow)});}catch{return json(res,502,{error:'Semantic search provider is temporarily unavailable.'});}
   }
-  if (pathname==='/api/search' && method==='GET') { const q=clean(query.get('q'),100); if(q.length<2)return json(res,200,{products:[]}); if(user)db.prepare('INSERT INTO search_events(user_id,query) VALUES(?,?)').run(user.id,q); const like='%'+q.replace(/[\\%_]/g,'')+'%'; const rows=db.prepare('SELECT * FROM products WHERE is_active=1 AND (name LIKE ? OR description LIKE ? OR category_slug LIKE ?) ORDER BY rating DESC LIMIT 20').all(like,like,like); return json(res,200,{products:rows.map(productRow)}); }
+  if (pathname==='/api/search' && method==='GET') { const q=clean(query.get('q'),100); if(q.length<2)return json(res,200,{products:[]}); if(user)db.prepare('INSERT INTO search_events(user_id,query) VALUES(?,?)').run(user.id,q); const like='%'+q.replace(/[\\%_]/g,'')+'%'; const rows=db.prepare('SELECT * FROM products WHERE is_active=1 AND ${PUBLIC_CATALOG_FILTER} AND (name LIKE ? OR description LIKE ? OR category_slug LIKE ?) ORDER BY rating DESC LIMIT 20').all(like,like,like); return json(res,200,{products:rows.map(productRow)}); }
   if (pathname==='/api/gift-cards/check' && method==='POST') { if(rateLimited('gift-check:'+clientIp(req),12,60000))return json(res,429,{error:'Too many gift card checks. Try again shortly.'}); const code=clean(body?.code,32).toUpperCase(); const g=db.prepare("SELECT code,balance,active,expires_at FROM gift_cards WHERE code=?").get(code); if(!g||!g.active||(g.expires_at&&new Date(g.expires_at)<new Date()))return json(res,404,{error:'Gift card not found or expired.'}); return json(res,200,{code:g.code,balance:g.balance}); }
   if (pathname==='/api/loyalty' && method==='GET') { if(!user)return json(res,401,{error:'Sign in to view rewards.'}); const rows=db.prepare('SELECT points,reason,order_id,created_at FROM loyalty_ledger WHERE user_id=? ORDER BY id DESC LIMIT 50').all(user.id); return json(res,200,{points:rows.reduce((n,r)=>n+r.points,0),history:rows,earnRate:'1 point per ₹100 on eligible delivered orders'}); }
   if (pathname==='/api/support/tickets' && method==='GET') { if(!user)return json(res,401,{error:'Sign in to view support tickets.'}); return json(res,200,{tickets:db.prepare('SELECT id,subject,message,status,created_at FROM support_tickets WHERE user_id=? ORDER BY id DESC').all(user.id)}); }
