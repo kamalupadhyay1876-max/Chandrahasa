@@ -17,7 +17,33 @@
  let toastWrapped=false;const installToast=()=>{if(toastWrapped||!window.CH||typeof CH.toast!=='function')return;const original=CH.toast.bind(CH);CH.toast=(message)=>{original(message);add(message,/failed|could not|error|unavailable/i.test(String(message))?'error':'success');};toastWrapped=true;};installToast();document.addEventListener('DOMContentLoaded',installToast,{once:true});
  window.addEventListener('ch:notification',e=>add(e.detail?.message,e.detail?.kind));
  // Progressive reveal: no content is hidden if JS or IntersectionObserver is unavailable.
- if(!reduce&&'IntersectionObserver'in window){const observer=new IntersectionObserver(entries=>entries.forEach(entry=>{if(entry.isIntersecting){entry.target.classList.add('ch-in-view');observer.unobserve(entry.target);}}),{threshold:.08,rootMargin:'0px 0px -36px 0px'});const reveal=root=>root.querySelectorAll('main section, main .panel, .product-card, .cat-card, .feature-item').forEach((el,index)=>{if(el.closest('.admin-shell')||el.classList.contains('ch-reveal'))return;el.style.setProperty('--ch-stagger',Math.min(index%6,5)*65+'ms');el.classList.add('ch-reveal');observer.observe(el);});reveal(document);new MutationObserver(records=>records.forEach(record=>record.addedNodes.forEach(node=>{if(node.nodeType===1){if(node.matches?.('.product-card,.cat-card,.feature-item,main section,.panel')){node.classList.add('ch-reveal');observer.observe(node);}reveal(node);}})).observe(document.body,{childList:true,subtree:true});}
+  if (!reduce && 'IntersectionObserver' in window) {
+    const observer = new IntersectionObserver(entries => {
+      entries.forEach(entry => {
+        if (entry.isIntersecting) {
+          entry.target.classList.add('ch-in-view');
+          observer.unobserve(entry.target);
+        }
+      });
+    }, { threshold: .08, rootMargin: '0px 0px -36px 0px' });
+    const reveal = root => {
+      const nodes = [];
+      if (root.nodeType === 1 && root.matches?.('main section, main .panel, .product-card, .cat-card, .feature-item')) nodes.push(root);
+      nodes.push(...root.querySelectorAll('main section, main .panel, .product-card, .cat-card, .feature-item'));
+      nodes.forEach((el, index) => {
+        if (el.closest('.admin-shell') || el.classList.contains('ch-reveal')) return;
+        el.style.setProperty('--ch-stagger', Math.min(index % 6, 5) * 65 + 'ms');
+        el.classList.add('ch-reveal');
+        observer.observe(el);
+      });
+    };
+    reveal(document);
+    new MutationObserver(records => {
+      records.forEach(record => record.addedNodes.forEach(node => {
+        if (node.nodeType === 1) reveal(node);
+      }));
+    }).observe(document.body, { childList: true, subtree: true });
+  }
  // Restrained pointer depth on desktop cards only.
  if(!reduce&&window.matchMedia('(pointer:fine)').matches){document.addEventListener('pointermove',e=>{const card=e.target.closest('.product-card');if(!card)return;const r=card.getBoundingClientRect(),x=(e.clientX-r.left)/r.width-.5,y=(e.clientY-r.top)/r.height-.5;card.style.setProperty('--ch-tilt-x',(-y*2.2).toFixed(2)+'deg');card.style.setProperty('--ch-tilt-y',(x*2.2).toFixed(2)+'deg');});document.addEventListener('pointerout',e=>{const card=e.target.closest?.('.product-card');if(card){card.style.removeProperty('--ch-tilt-x');card.style.removeProperty('--ch-tilt-y');}});}
  // Pull-to-refresh only at the top of the document, on touch devices; never hijack horizontal gestures.
