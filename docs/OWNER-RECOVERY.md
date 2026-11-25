@@ -16,7 +16,7 @@ The recovery script requires an existing account, never creates a new account, w
 If no Admin exists but an existing customer account does, the script can promote that exact existing account after the explicit shell confirmation. If an Admin already exists, the script only resets that Admin's password.
 
 ## Automatic and manual backups
-Production creates a verified SQLite online backup shortly after startup and then every 24 hours. Backups are stored under `/data/backups` on the persistent Railway volume. At least seven days are retained (default 30 days). The Admin Studio Backups tab can create an additional backup and download a backup only after its SHA-256 checksum is verified.
+Production creates a verified SQLite online backup shortly after startup and then every 24 hours. Backups are stored under `/data/backups` on the persistent Railway volume. At least seven days are retained (default 30 days). Each backup includes the SQLite database plus a `*.media.tar.gz` archive of uploaded images when the uploads directory exists. Both archives have separate SHA-256 checksums. The Admin Studio Backups tab can create an additional backup and download the database, media archive, and checksums only after verification.
 
 Keep a downloaded backup somewhere separate from Railway. A backup stored only on the same Railway volume does not protect against volume loss.
 
@@ -29,10 +29,10 @@ Restore is deliberately offline to avoid replacing a live SQLite database while 
 4. Run `npm run db:restore -- /data/backups/chandrahasa-YYYY-MM-DDTHH-MM-SS-sssZ.sqlite`.
 5. Restart the service and verify `/api/health`, owner login, products, customers, orders, and payments.
 
-The restore script checks the checksum and SQLite integrity and creates a fresh safety backup of the current database before replacement. Never restore an untrusted or checksum-mismatched file.
+The restore script checks the database checksum and SQLite integrity, creates a fresh safety backup of the current database before replacement, and restores the matching media archive after verifying its checksum and rejecting unsafe archive paths. Never restore an untrusted or checksum-mismatched file.
 
 ## Media uploads
-Admin image uploads accept JPEG, PNG, WebP and GIF up to 8 MB each. Files are stored in `/data/uploads` with random filenames and are served as inert image content. SVG is intentionally not accepted to avoid active-content uploads. Include the `/data` volume in your backup plan; database backups do not include uploaded image files, so separately copy `/data/uploads` periodically.
+Admin image uploads accept JPEG, PNG, WebP and GIF up to 8 MB each. Files are stored in `/data/uploads` with random filenames and are served as inert image content. SVG is intentionally not accepted to avoid active-content uploads. The scheduled backup also archives `/data/uploads` when present.
 
 ## Important
 A lost account password, a lost setup key, and a lost database are different recovery events. Backups protect data; the private recovery script restores account access. Neither should be used to bypass payment verification, audit logs, or authorization checks.
