@@ -388,3 +388,20 @@ async function applyStoreCustomizations(){
 }
 if(document.readyState==='loading')document.addEventListener('DOMContentLoaded',applyStoreCustomizations,{once:true});else applyStoreCustomizations();
 setInterval(()=>{if(!document.hidden)applyStoreCustomizations();},60000);
+
+/* Product comparison: collect up to four catalogue IDs and open the comparison table. */
+document.addEventListener('click', event => {
+  const button = event.target.closest('[data-compare-product]');
+  if (!button) return;
+  const id = Number(button.dataset.compareProduct);
+  if (!Number.isSafeInteger(id) || id < 1) return;
+  let ids = [];
+  try { ids = JSON.parse(localStorage.getItem('ch_compare_ids') || '[]'); } catch { ids = []; }
+  ids = Array.isArray(ids) ? ids.map(Number).filter(value => Number.isSafeInteger(value) && value > 0).slice(0,4) : [];
+  if (!ids.includes(id)) {
+    if (ids.length >= 4) { CH.toast('Compare up to four pieces at a time.'); return; }
+    ids.push(id);
+  }
+  try { localStorage.setItem('ch_compare_ids', JSON.stringify(ids)); } catch { CH.toast('Comparison could not be saved in this browser.'); return; }
+  window.location.href = '/compare?ids=' + encodeURIComponent(ids.join(','));
+});
