@@ -1299,15 +1299,19 @@ async function route(req, res, pathname, query) {
     if (pathname === '/api/admin/products' && method === 'POST') {
       const b = body || {};
       const name = clean(b.name, 120), category = clean(b.category_slug, 60);
-      const price = toInt(b.price); const huid = clean(b.huid || String(crypto.randomInt(100000, 999999)), 8);
-      if (!name || !category || price <= 0) return json(res, 400, { error: 'Name, category and price are required.' });
-      const slug = clean(b.slug || name.toLowerCase().replace(/[^a-z0-9]+/g, '-'), 120);
-      if (!db.prepare('SELECT 1 FROM categories WHERE slug = ?').get(category)) return json(res, 400, { error: 'Unknown category.' });
-      if (db.prepare('SELECT 1 FROM products WHERE slug = ?').get(slug)) return json(res, 409, { error: 'Slug already exists.' });
-      const images = Array.isArray(b.images) && b.images.length ? b.images : ['/assets/img/rings.webp'];
+      const price = toInt(b.price), huid = clean(b.huid, 8);
+      if (!name || !category || price <= 0) return json(res, 400, { error: 'Name, category and a positive price are required.' });
+      const slug = clean(b.slug || name.toLowerCase().replace(/[^a-z0-9]+/g, '-').replace(/^-|-$/g, ''), 120).toLowerCase();
+      if (!db.prepare('SELECT 1 FROM categories WHERE slug = ?').get(category)) return json(res, 400, { error: 'Selected category no longer exists. Refresh Categories and choose a valid category.' });
+      if (db.prepare('SELECT 1 FROM products WHERE slug = ?').get(slug)) return json(res, 409, { error: 'Product URL slug already exists.' });
+      const images = Array.isArray(b.images) ? b.images.map(x => clean(x, 1000)).filter(Boolean).slice(0, 20) : [];
       db.prepare(`INSERT INTO products (slug,name,category_slug,description,price,compare_price,images,huid,purity,weight,stock,rating,review_count,badge,artisan,artisan_story,is_active)
-        VALUES (?,?,?,?,?,?,?,?,?,?,?,5.0,0,?,?,?,1)`).run(slug, name, category, clean(b.description, 600), price, toInt(b.compare_price) || null,
-        JSON.stringify(images), huid, '925 Sterling Silver', clean(b.weight, 20) || '—', toInt(b.stock), clean(b.badge, 30) || null, clean(b.artisan, 80) || 'Chandrahasa Atelier', clean(b.artisan_story, 600));
+        VALUES (?,?,?,?,?,?,?,?,?,?,?,0,0,?,?,?,?,?)`).run(
+        slug, name, category, clean(b.description, 6000), price, toInt(b.compare_price) || null,
+        JSON.stringify(images), huid, clean(b.purity, 80) || '', clean(b.weight, 40), Math.max(0,toInt(b.stock)),
+        clean(b.badge, 30) || null, clean(b.artisan, 80), clean(b.artisan_story, 6000), b.is_active === false ? 0 : 1
+      );
+      auditLog(user.id, 'create', 'product', db.prepare('SELECT last_insert_rowid() id').get().id, { name, slug, category });
       return json(res, 201, { ok: true });
     }
     if ((m = pathname.match(/^\/api\/admin\/products\/(\d+)$/))) {
@@ -1315,15 +1319,21 @@ async function route(req, res, pathname, query) {
       if (method === 'PUT') {
         const b = body || {};
         const current = db.prepare('SELECT * FROM products WHERE id = ?').get(id);
-        if (!current) return json(res, 404, { error: 'Not found.' });
-        db.prepare(`UPDATE products SET name=?, slug=?, category_slug=?, description=?, price=?, compare_price=?, images=?, huid=?, weight=?, stock=?, badge=?, artisan=?, artisan_story=?, is_active=? WHERE id=?`).run(
-          clean(b.name, 120) || current.name, clean(b.slug, 120) || current.slug,
-          clean(b.category_slug, 60) || current.category_slug, clean(b.description, 600),
-          toInt(b.price) || current.price, toInt(b.compare_price) || null,
-          JSON.stringify(Array.isArray(b.images) && b.images.length ? b.images : JSON.parse(current.images || '[]')),
-          clean(b.huid, 8) || current.huid, clean(b.weight, 20) || current.weight, Math.max(0, toInt(b.stock, current.stock)),
-          clean(b.badge, 30) || null, clean(b.artisan, 80) || current.artisan, clean(b.artisan_story, 600) || current.artisan_story,
-          b.is_active === false ? 0 : 1, id);
+        if (!current) return json(res, 404, { error: 'Product not found.' });
+        const category = clean(b.category_slug, 60) || current.category_slug;
+        if (!db.prepare('SELECT 1 FROM categories WHERE slug = ?').get(category)) return json(res, 400, { error: 'Selected category no longer exists. Refresh Categories and choose a valid category.' });
+        const slug = clean(b.slug, 120).toLowerCase() || current.slug;
+        if (db.prepare('SELECT 1 FROM products WHERE slug = ? AND id <> ?').get(slug,id)) return json(res, 409, { error: 'Product URL slug already exists.' });
+        const images = Array.isArray(b.images) ? b.images.map(x => clean(x,1000)).filter(Boolean).slice(0,20) : JSON.parse(current.images || '[]');
+        db.prepare(`UPDATE products SET name=?, slug=?, category_slug=?, description=?, price=?, compare_price=?, images=?, huid=?, purity=?, weight=?, stock=?, badge=?, artisan=?, artisan_story=?, is_active=? WHERE id=?`).run(
+          clean(b.name,120) || current.name, slug, category, clean(b.description,6000),
+          toInt(b.price) > 0 ? toInt(b.price) : current.price, toInt(b.compare_price) || null,
+          JSON.stringify(images), Object.prototype.hasOwnProperty.call(b,'huid') ? clean(b.huid,8) : current.huid,
+          clean(b.purity,80), clean(b.weight,40), Math.max(0,toInt(b.stock,current.stock)),
+          clean(b.badge,30) || null, clean(b.artisan,80), clean(b.artisan_story,6000),
+          b.is_active === false ? 0 : 1, id
+        );
+        auditLog(user.id, 'update', 'product', id, { name: clean(b.name,120) || current.name, slug, category });
         return json(res, 200, { ok: true });
       }
       if (method === 'DELETE') {
