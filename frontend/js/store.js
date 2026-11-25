@@ -41,7 +41,8 @@ const CH = {
 };
 
 /* ──────────────────────── STATE ─────────────────────────── */
-const CH_STATE = { user: null, guestCart: null, serverCart: null, wishlistIds: new Set(), loaded: false };
+const CH_STATE = { user: null, guestCart: null, serverCart: null, wishlistIds: new Set(), loaded: false, cartError: null };
+CH_STATE.ready = new Promise(resolve => { CH_STATE.resolveReady = resolve; });
 
 function guestCartLoad() {
   if (CH_STATE.guestCart) return CH_STATE.guestCart;
@@ -120,14 +121,14 @@ function renderShipBar(subtotal) {
 
 function cartLineHTML(i) {
   const safeAttr = value => String(value ?? '').replace(/[&<>"']/g, ch => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[ch]));
-  const image = typeof i.image === 'string' && (/^\/(?:uploads|assets)\/[a-zA-Z0-9._/-]+$/.test(i.image) || /^https?:\/\/[^"'<>\\s]+$/i.test(i.image)) ? i.image : '';
+  const image = typeof i.image === 'string' && (/^\/(?:uploads|assets)\/[A-Za-z0-9_-]+(?:\/[A-Za-z0-9_.-]+)*$/.test(i.image) || /^https?:\/\/[^"'<>\\s]+$/i.test(i.image)) ? i.image : '';
   const compare = i.compare_price && i.compare_price > i.price ? `<span class="pc-compare">${CH.money(i.compare_price)}</span>` : '';
   return `<div class="cart-line" data-line="${i.productId}" data-size="${i.size || ''}">
     ${image ? `<img src="${safeAttr(image)}" alt="${safeAttr(i.name)}" loading="lazy">` : '<div class="cart-image-empty" aria-label="No product image available">CH</div>'}
     <div>
-      <h4>${i.name}</h4>
-      <div class="cl-huid">${i.huid ? 'HUID ' + i.huid : 'Product details'}</div>
-      ${i.size ? `<div class="cl-huid">Size ${i.size}</div>` : ''}
+      <h4>${safeAttr(i.name)}</h4>
+      <div class="cl-huid">${i.huid ? 'HUID ' + safeAttr(i.huid) : 'Product details'}</div>
+      ${i.size ? `<div class="cl-huid">Size ${safeAttr(i.size)}</div>` : ''}
       <div class="qty" aria-label="Quantity">
         <button type="button" data-dec aria-label="Decrease">−</button>
         <span>${i.qty}</span>
@@ -273,6 +274,9 @@ document.addEventListener('DOMContentLoaded', async () => {
   } catch { CH_STATE.user = null; }
 
   await refreshCartUI();
+  CH_STATE.loaded = true;
+  CH_STATE.resolveReady?.(CH_STATE);
+  CH_STATE.resolveReady = null;
 
   // Live catalogue search: debounced suggestions + full results route.
   const overlay = CH.$('#searchOverlay');

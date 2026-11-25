@@ -5,25 +5,38 @@ const $ = (s, c = document) => c.querySelector(s);
 const $$ = (s, c = document) => [...c.querySelectorAll(s)];
 const fmt = CH.money;
 
-const state = { items: [], subtotal: 0, discount: 0, shipping: 0, giftCharge: 0, giftWrap: false, coupon: null, method: 'cod', pinTimer: null };
+const state = { items: [], subtotal: 0, discount: 0, shipping: 0, giftCharge: 0, giftWrap: false, coupon: null, method: 'cod', pinTimer: null, loadError: null };
 
 /* ── load cart into summary ── */
 async function loadSummary() {
+  const wrap = $('#summaryItems');
   try {
     const items = await CH.getCart();
-    state.items = items;
-  } catch { state.items = []; }
-  const wrap = $('#summaryItems');
-  if (!state.items.length) {
-    wrap.innerHTML = '<div class="empty-state" style="border:none;padding:20px 8px">Your bag is empty. <a href="/shop" style="color:var(--gold-deep)">Add something beautiful →</a></div>';
-  } else {
-    wrap.innerHTML = state.items.map(i => `<div class="summary-line">
-      <img src="${i.image || '/assets/img/rings.webp'}" alt="${i.name}" data-fb="/assets/img/rings.webp">
-      <div style="flex:1"><b style="font-size:13px;color:var(--charcoal);display:block">${i.name}</b>
-        <span style="font-size:11px;color:var(--faint)">Qty ${i.qty}${i.size ? ' · Size ' + i.size : ''} · HUID ${i.huid || '—'}</span></div>
-      <b style="font-size:13px">${fmt(i.price * i.qty)}</b>
-    </div>`).join('');
+    state.items = Array.isArray(items) ? items : [];
+    state.loadError = null;
+  } catch (error) {
+    state.items = [];
+    state.loadError = error || new Error('Cart unavailable');
   }
+  if (state.loadError) {
+    wrap.innerHTML = `<div class="empty-state" role="alert" style="border:none;padding:20px 8px"><b>We couldn't load your bag.</b><p>Please check your connection and try again. Your saved items have not been removed.</p><button class="btn btn-outline btn-sm" type="button" id="retryCartLoad">Try again</button></div>`;
+    $('#retryCartLoad')?.addEventListener('click', loadSummary);
+  } else if (!state.items.length) {
+    wrap.innerHTML = '<div class="empty-state" style="border:none;padding:20px 8px">Your bag is empty. <a href="/shop" style="color:var(--gold-deep)">Explore the collection →</a></div>';
+  } else {
+    const safe = value => String(value ?? '').replace(/[&<>"']/g, ch => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[ch]));
+    wrap.innerHTML = state.items.map(i => {
+      const image = typeof i.image === 'string' && (/^\/(?:uploads|assets)\/[A-Za-z0-9_-]+(?:\/[A-Za-z0-9_.-]+)*$/.test(i.image) || /^https?:\/\/[^"'<>\\s]+$/i.test(i.image)) ? i.image : '';
+      const media = image ? `<img src="${safe(image)}" alt="${safe(i.name)}" loading="lazy">` : '<div class="summary-image-empty" aria-label="No product image available">CH</div>';
+      return `<div class="summary-line">${media}
+        <div style="flex:1"><b style="font-size:13px;color:var(--charcoal);display:block">${safe(i.name)}</b>
+          <span style="font-size:11px;color:var(--faint)">Qty ${safe(i.qty)}${i.size ? ' · Size ' + safe(i.size) : ''} · HUID ${safe(i.huid || '—')}</span></div>
+        <b style="font-size:13px">${fmt(i.price * i.qty)}</b>
+      </div>`;
+    }).join('');
+  }
+  $('#placeOrderBtn').disabled = Boolean(state.loadError);
+
   state.subtotal = state.items.reduce((s, i) => s + i.price * i.qty, 0);
   // re-apply pre-saved coupon (from the cart drawer)
   const pre = sessionStorage.getItem('ch_coupon');
@@ -98,6 +111,7 @@ function showError(msg) { errorBox.textContent = msg; errorBox.classList.add('sh
 $('#checkoutForm').addEventListener('submit', async (e) => {
   e.preventDefault();
   errorBox.classList.remove('show');
+  if (state.loadError) return showError('Your bag could not be loaded. Please retry before placing the order.');
   if (!state.items.length) return showError('Your bag is empty — add a piece before checking out.');
   const email = $('#coEmail').value.trim(), phone = $('#coPhone').value.trim();
   const address = { name: $('#coName').value.trim(), line1: $('#coLine1').value.trim(), line2: $('#coLine2').value.trim(), city: $('#coCity').value.trim(), state: $('#coState').value, pincode: $('#coPincode').value.trim() };
@@ -179,6 +193,10 @@ async function loadSavedAddresses() {
 }
 function fillAddress(a){$('#coName').value=a.name||'';$('#coPhone').value=a.phone||$('#coPhone').value;$('#coLine1').value=a.line1||'';$('#coLine2').value=a.line2||'';$('#coPincode').value=a.pincode||'';$('#coCity').value=a.city||'';$('#coState').value=a.state||'';}
 (async function boot() {
+  // store.js owns auth detection and guest-to-account cart merge. Wait for it
+  // before reading the cart so a signed-in customer's server cart is not
+  // mistaken for an empty guest cart.
+  if (CH_STATE?.ready) await CH_STATE.ready;
   await loadSummary();
   try { const me = await CH.api('/api/auth/me'); if (me.user) { $('#coEmail').value = me.user.email; $('#coPhone').value = me.user.phone || ''; $('#coName').value = me.user.name || ''; await loadSavedAddresses(); try{const rw=await CH.api('/api/loyalty');$('#loyaltyPoints').max=String(Math.max(0,rw.points));$('#loyaltyBalanceHint').textContent=`Available: ${Math.max(0,rw.points)} points. Redemption is capped at 20% of eligible order value.`;}catch{} } }
   catch { /* guest checkout */ }
