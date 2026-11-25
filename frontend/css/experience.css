@@ -1,6 +1,6 @@
 /* Premium motion language — restrained editorial transitions, never motion for motion's sake. */
 :root{--ch-motion:cubic-bezier(.2,.75,.25,1)}
-.ch-reveal{opacity:0;transform:translate3d(0,18px,0);transition:opacity .72s var(--ch-motion),transform .72s var(--ch-motion)}
+.ch-reveal{opacity:0;transform:translate3d(0,18px,0);transition:opacity .72s var(--ch-motion) var(--ch-stagger,0ms),transform .72s var(--ch-motion) var(--ch-stagger,0ms)}
 .ch-reveal.ch-in-view{opacity:1;transform:translate3d(0,0,0)}
 .product-card{transform:perspective(900px) rotateX(var(--ch-tilt-x,0deg)) rotateY(var(--ch-tilt-y,0deg));transition:transform .35s var(--ch-motion),box-shadow .35s var(--ch-motion),border-color .35s}
 .product-card:hover{box-shadow:0 18px 42px rgba(43,27,23,.11);border-color:rgba(145,112,66,.28)}
@@ -27,3 +27,8 @@
 .ch-pull-indicator.refreshing{transform:translate(-50%,12px)}
 @media(max-width:640px){.ch-notify-panel{right:10px;top:auto;bottom:calc(76px + env(safe-area-inset-bottom));width:calc(100vw - 20px)}.ch-notify-trigger{width:38px;height:38px}.ch-reveal{transform:translateY(12px)}}
 @media(prefers-reduced-motion:reduce){.ch-reveal{opacity:1;transform:none;transition:none}.product-card,.product-card img,.cat-card img,.btn,.icon-btn{transition:none!important;transform:none!important}}
+
+.nav-links a.ch-nav-current{color:var(--gold-deep);position:relative}.nav-links a.ch-nav-current:after{content:'';position:absolute;left:0;right:0;bottom:-7px;height:1px;background:currentColor;transform-origin:left;animation:ch-nav-line .45s var(--ch-motion) both}
+@keyframes ch-nav-line{from{transform:scaleX(0)}to{transform:scaleX(1)}}
+body{animation:ch-page-enter .45s var(--ch-motion) both}@keyframes ch-page-enter{from{opacity:.72}to{opacity:1}}
+@media(prefers-reduced-motion:reduce){body{animation:none}.nav-links a.ch-nav-current:after{animation:none}}
