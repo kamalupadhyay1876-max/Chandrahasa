@@ -1,0 +1,63 @@
+/* Chandrahasa Admin Studio — focused desktop/mobile workspace */
+body:has(.admin-shell){background:#f5f2ec!important}
+.admin-shell{min-height:100dvh;grid-template-columns:248px minmax(0,1fr);background:#f5f2ec}
+.admin-side{background:#302128;border-right:1px solid rgba(255,255,255,.07);padding:24px 0 22px}
+.admin-side nav{display:grid;gap:3px;padding:0 12px}
+.admin-link{margin:0 0 2px;border-radius:9px;border-left:0;padding:12px 13px;color:#d1c8c1;font-size:13px;transition:background .18s,color .18s}
+.admin-link:hover{background:rgba(255,255,255,.075)}
+.admin-link.active{background:rgba(214,185,126,.13);color:#f0d49c;border-left:0}
+.admin-main{min-width:0;padding:clamp(20px,3vw,42px) clamp(16px,3.2vw,46px) 64px;background:#f5f2ec}
+.admin-main>.kicker{color:#8d7454}
+.admin-main>h1{margin:0 0 22px;line-height:1.15}
+.admin-panel,.stat-card{border:1px solid rgba(56,39,33,.1);border-radius:14px;background:#fffefa;box-shadow:0 5px 20px rgba(40,28,23,.035)}
+.stat-grid{gap:12px}
+.stat-card{padding:18px 19px;min-width:0}
+.stat-card span{letter-spacing:.12em}
+.stat-card b{font-size:clamp(22px,2vw,29px);font-variant-numeric:tabular-nums;overflow-wrap:anywhere}
+.admin-panel{padding:clamp(16px,2vw,24px)}
+.admin-panel h2{letter-spacing:-.015em}
+.admin-table{border-collapse:separate;border-spacing:0;min-width:720px}
+.admin-table th{background:#f7f4ee;position:sticky;top:0;z-index:1}
+.admin-table th:first-child{border-radius:8px 0 0 0}
+.admin-table th:last-child{border-radius:0 8px 0 0}
+.admin-table td{line-height:1.45}
+.admin-table tbody tr:hover{background:#faf7f1}
+.admin-main input,.admin-main select,.admin-main textarea{max-width:100%}
+.admin-main button,.admin-main a{touch-action:manipulation}
+.admin-main .btn{white-space:nowrap}
+.admin-tab{min-width:0}
+.admin-tab.hidden{display:none!important}
+#overviewSplit{grid-template-columns:minmax(0,1.2fr) minmax(0,1fr)!important}
+#salesChart{max-height:240px}
+#tab-products .admin-panel>div[style*="overflow-x:auto"]{max-width:100%;overflow:auto;border:1px solid rgba(56,39,33,.08);border-radius:10px}
+#productModal .modal-box,.modal-box{border:1px solid rgba(56,39,33,.12);border-radius:16px;box-shadow:0 24px 70px rgba(24,15,16,.22)}
+.admin-side button[data-signout]{padding:10px 0}
+@media(max-width:940px){
+ .admin-shell{grid-template-columns:1fr}
+ .admin-side{position:sticky;top:0;z-index:80;height:auto;min-height:0;padding:8px 10px;background:#302128;overflow:hidden}
+ .admin-side .brand,.admin-side>div:last-child{display:none}
+ .admin-side nav{display:flex;gap:5px;overflow-x:auto;padding:0 0 2px;scrollbar-width:thin}
+ .admin-link{flex:0 0 auto;padding:10px 13px;border-radius:8px;font-size:12px}
+ .admin-main{padding-top:22px}
+}
+@media(max-width:640px){
+ .admin-side{padding:7px 8px}
+ .admin-side nav{gap:4px}
+ .admin-link{padding:9px 11px;font-size:11px}
+ .stat-grid{grid-template-columns:repeat(2,minmax(0,1fr));gap:9px}
+ .stat-card{padding:13px}
+ .stat-card span{font-size:9px;letter-spacing:.09em}
+ .stat-card b{font-size:22px}
+ .admin-main{padding:18px 12px 48px}
+ .admin-panel{padding:14px;margin-bottom:12px}
+ #overviewSplit{grid-template-columns:1fr!important}
+ #tab-products .admin-panel>div:first-child{align-items:stretch!important}
+ #tab-products .admin-panel>div:first-child>div{min-width:0!important;flex-wrap:wrap}
+ #productSearch{max-width:none!important;flex-basis:100%}
+ .admin-main .btn{min-height:42px}
+ .modal{align-items:flex-end;padding:8px}
+ .modal-box{width:100%;max-height:92dvh;border-radius:18px 18px 10px 10px;padding:18px}
+}
+@media(prefers-reduced-motion:reduce){
+ .admin-link{transition:none}
+}
