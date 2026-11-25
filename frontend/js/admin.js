@@ -369,7 +369,7 @@ $('#pfUpload')?.addEventListener('change',async()=>{
 /* ── database backup download and restore preparation ── */
 async function loadBackups(){
   const data=await CH.api('/api/admin/backups');const tbody=$('#backupsTable tbody');if(!tbody)return;
-  tbody.innerHTML=(data.backups||[]).map(b=>'<tr><td>'+escapeAdminText(b.name)+'</td><td>'+new Date(b.createdAt).toLocaleString()+'</td><td>'+Math.round(b.bytes/1024)+' KB</td><td>'+(b.checksumPresent?'Verified file':'Missing')+'</td><td><a href="/api/admin/backups/'+encodeURIComponent(b.name)+'">Download</a></td></tr>').join('')||'<tr><td colspan="5">No backups available yet.</td></tr>';
+  tbody.innerHTML=(data.backups||[]).map(b=>'<tr><td>'+escapeAdminText(b.name)+'</td><td>'+new Date(b.createdAt).toLocaleString()+'</td><td>'+Math.round(b.bytes/1024)+' KB</td><td>'+(b.checksumPresent?'Verified':'Missing')+'</td><td><a href="/api/admin/backups/'+encodeURIComponent(b.name)+'">Database</a> · <a href="/api/admin/backups/'+encodeURIComponent(b.name)+'.sha256">Checksum</a>'+(b.mediaArchivePresent?' · <a href="/api/admin/backups/'+encodeURIComponent(b.name.replace(/\.sqlite$/,'.media.tar.gz'))+'">Media</a> · <a href="/api/admin/backups/'+encodeURIComponent(b.name.replace(/\.sqlite$/,'.media.tar.gz'))+'.sha256">Media checksum</a>':'')+'</td></tr>').join('')||'<tr><td colspan="5">No backups available yet.</td></tr>';
 }
 $('#createBackupBtn')?.addEventListener('click',async()=>{
   const status=$('#backupStatus');status.textContent='Creating and verifying backup…';
