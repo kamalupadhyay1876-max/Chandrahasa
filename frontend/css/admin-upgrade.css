@@ -61,3 +61,40 @@ body:has(.admin-shell){background:#f5f2ec!important}
 @media(prefers-reduced-motion:reduce){
  .admin-link{transition:none}
 }
+
+
+/* Premium owner workspace */
+.admin-side{position:sticky;top:0;height:100dvh;min-height:100dvh;display:flex;flex-direction:column;overflow-y:auto;scrollbar-width:thin}
+.admin-side .brand{padding:0 22px 24px}
+.admin-nav-label{padding:17px 13px 6px;color:rgba(230,215,190,.48);font-size:9px;font-weight:700;letter-spacing:.19em;text-transform:uppercase}
+.admin-link{position:relative;display:flex;align-items:center;gap:11px;min-height:43px}
+.admin-link.active:before{content:"";position:absolute;left:0;top:10px;bottom:10px;width:2px;border-radius:2px;background:#d8b878}
+.admin-link svg{width:17px;height:17px;flex:0 0 17px;opacity:.78}
+.admin-link-external{margin-top:10px;border:1px solid rgba(220,195,145,.16);color:#e4d2b2}
+.admin-main>.admin-topline{display:flex;justify-content:flex-end;align-items:center;gap:10px;margin:-6px 0 14px;color:#8d8175;font-size:11px}
+.admin-section-note{margin:6px 0 0;color:#8b8177;font-size:12px;line-height:1.5}
+.admin-order-tools{display:flex;align-items:center;gap:10px;flex-wrap:wrap}
+.admin-view-switch{display:inline-flex;gap:3px;padding:3px;border:1px solid #e5ddcf;border-radius:999px;background:#f8f5ef}
+.admin-view-switch button{border:0;background:transparent;color:#766a61;border-radius:999px;padding:8px 13px;font:inherit;font-size:11px;cursor:pointer}
+.admin-view-switch button.active{background:#34212a;color:#f7e7c6;box-shadow:0 2px 8px #34212a22}
+.orders-kanban{display:grid;grid-auto-flow:column;grid-auto-columns:minmax(230px,1fr);gap:12px;overflow-x:auto;padding:4px 2px 12px;scroll-snap-type:x proximity}
+.orders-kanban.hidden,.orders-list-view.hidden{display:none!important}
+.orders-lane{min-width:0;min-height:260px;padding:11px;border:1px solid #e8e0d3;border-radius:13px;background:#f8f5ef;scroll-snap-align:start}
+.orders-lane.is-over{border-color:#b58a50;background:#f4ecde;box-shadow:inset 0 0 0 1px #b58a5033}
+.orders-lane-head{display:flex;align-items:center;justify-content:space-between;gap:8px;padding:2px 2px 11px}
+.orders-lane-head strong{font-size:11px;letter-spacing:.08em;text-transform:uppercase;color:#49343a}
+.orders-lane-count{min-width:22px;height:22px;display:grid;place-items:center;border-radius:50%;background:#eee5d8;color:#6c574a;font-size:10px;font-weight:700}
+.orders-lane-body{display:grid;gap:9px;min-height:205px}
+.order-kanban-card{padding:12px;border:1px solid #e9e1d5;border-radius:10px;background:#fffefa;box-shadow:0 3px 12px #33231c08;cursor:grab;transition:transform .18s,border-color .18s,box-shadow .18s}
+.order-kanban-card:active{cursor:grabbing}
+.order-kanban-card[aria-grabbed=true]{opacity:.55;transform:rotate(-1deg) scale(.98)}
+.order-kanban-card:focus-within{outline:2px solid #b58a50;outline-offset:2px}
+.order-kanban-top{display:flex;justify-content:space-between;gap:8px;align-items:center}
+.order-kanban-top b{font-size:12px;color:#38252b}
+.order-kanban-card p{margin:8px 0;color:#766a61;font-size:11px;line-height:1.5;overflow-wrap:anywhere}
+.order-kanban-total{font-size:14px;font-weight:700;color:#39252c;font-variant-numeric:tabular-nums}
+.order-kanban-card select{width:100%;margin-top:10px;padding:8px;border:1px solid #e7dfd2;border-radius:7px;background:#fbf8f2;color:#57464a;font-size:11px}
+.order-kanban-empty{padding:20px 8px;text-align:center;color:#a0968a;font-size:11px;border:1px dashed #ded4c5;border-radius:8px}
+@media(max-width:940px){.admin-side{position:sticky;height:auto;min-height:0}.admin-nav-label{display:none}}
+@media(max-width:640px){.admin-order-tools{width:100%;justify-content:space-between}.orders-kanban{grid-auto-columns:minmax(78vw,1fr)}.admin-view-switch button{padding:9px 15px}}
+@media(prefers-reduced-motion:reduce){.order-kanban-card,.admin-link{transition:none}}

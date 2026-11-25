@@ -259,6 +259,7 @@ async function loadOrders(status) {
       ${ORDER_STATUSES.map(s => `<option value="${s}" ${o.status === s ? 'selected' : ''}>${s.replace(/_/g, ' ')}</option>`).join('')}
     </select></td>
   </tr>`).join('') || '<tr><td colspan="7" style="text-align:center;color:var(--faint);padding:26px">No orders yet.</td></tr>';
+  renderOrdersBoard(data.orders || []);
 }
 $('#ordersTable')?.addEventListener('change', async (e) => {
   const sel = e.target.closest('[data-order]'); if (!sel) return;
@@ -266,6 +267,64 @@ $('#ordersTable')?.addEventListener('change', async (e) => {
   catch (err) { CH.toast(err.message); loadOrders($('#orderStatusFilter').value); }
 });
 $('#orderStatusFilter')?.addEventListener('change', (e) => loadOrders(e.target.value));
+
+/* Accessible drag-and-drop order board: server remains the source of truth. */
+const ORDER_LANES = [
+  ['pending','New'],['confirmed','Confirmed'],['shipped','Shipped'],
+  ['out_for_delivery','Out for delivery'],['delivered','Delivered'],
+  ['cancelled','Cancelled'],['returned','Returned']
+];
+function renderOrdersBoard(orders){
+  const host=$('#ordersKanban');if(!host)return;
+  host.innerHTML=ORDER_LANES.map(([status,label])=>{
+    const rows=orders.filter(o=>o.status===status);
+    return '<section class="orders-lane" data-drop-status="'+status+'"><div class="orders-lane-head"><strong>'+label+'</strong><span class="orders-lane-count">'+rows.length+'</span></div><div class="orders-lane-body">'+(rows.length ? rows.map(o=>{
+      const customer=escapeAdminText((o.address&&o.address.name)||o.email||'Customer');
+      const items=(o.items||[]).map(i=>escapeAdminText(i.name)+' ×'+Number(i.qty||1)).join(' · ');
+      const orderDate=o.created_at?new Date(o.created_at+'Z').toLocaleDateString('en-IN',{day:'2-digit',month:'short',year:'numeric'}):'Date unavailable';
+      const tracking=escapeAdminText(o.tracking_number||'');
+      return '<article class="order-kanban-card" draggable="true" tabindex="0" data-drag-order="'+Number(o.id)+'" aria-label="Order '+Number(o.id)+', '+customer+'"><div class="order-kanban-top"><b>#CH'+Number(o.id)+'</b><span class="status-pill '+(o.payment_status==='paid'?'status-confirmed':'status-pending')+'">'+escapeAdminText(o.payment_method==='cod'?'COD':o.payment_status||'unpaid')+'</span></div><p><b>'+customer+'</b><br><small>'+orderDate+(tracking?' · AWB '+tracking:'')+'</small><br>'+items+'</p><div class="order-kanban-total">'+fmt(o.total)+'</div><select data-board-order="'+Number(o.id)+'" aria-label="Change status for order '+Number(o.id)+'">'+ORDER_STATUSES.map(s=>'<option value="'+s+'" '+(o.status===s?'selected':'')+'>'+s.replace(/_/g,' ')+'</option>').join('')+'</select></article>';
+    }).join('') : '<div class="order-kanban-empty">No orders in this stage</div>')+'</div></section>';
+  }).join('');
+}
+let draggedOrderId=null;
+$('#ordersKanban')?.addEventListener('dragstart',e=>{
+  const card=e.target.closest('[data-drag-order]');if(!card)return;
+  draggedOrderId=Number(card.dataset.dragOrder);card.setAttribute('aria-grabbed','true');
+  e.dataTransfer.effectAllowed='move';e.dataTransfer.setData('text/plain',String(draggedOrderId));
+});
+$('#ordersKanban')?.addEventListener('dragend',e=>{
+  const card=e.target.closest('[data-drag-order]');if(card)card.removeAttribute('aria-grabbed');
+  $$('.orders-lane').forEach(l=>l.classList.remove('is-over'));draggedOrderId=null;
+});
+$('#ordersKanban')?.addEventListener('dragover',e=>{
+  const lane=e.target.closest('[data-drop-status]');if(!lane)return;
+  e.preventDefault();e.dataTransfer.dropEffect='move';lane.classList.add('is-over');
+});
+$('#ordersKanban')?.addEventListener('dragleave',e=>{
+  const lane=e.target.closest('[data-drop-status]');if(lane&&!lane.contains(e.relatedTarget))lane.classList.remove('is-over');
+});
+async function saveBoardStatus(id,status){
+  if(!id||!ORDER_STATUSES.includes(status))return;
+  if(!confirm('Move order #'+id+' to '+status.replace(/_/g,' ')+'? The store will save this status.')){await loadOrders($('#orderStatusFilter').value);return;}
+  try{await CH.api('/api/admin/orders/'+id+'/status',{method:'PATCH',body:{status}});CH.toast('Order #'+id+' moved to '+status.replace(/_/g,' '));await loadOrders($('#orderStatusFilter').value);}
+  catch(err){CH.toast('Status not changed: '+err.message);await loadOrders($('#orderStatusFilter').value);}
+}
+$('#ordersKanban')?.addEventListener('drop',async e=>{
+  const lane=e.target.closest('[data-drop-status]');if(!lane)return;e.preventDefault();lane.classList.remove('is-over');
+  const id=Number(e.dataTransfer.getData('text/plain')||draggedOrderId);await saveBoardStatus(id,lane.dataset.dropStatus);
+});
+$('#ordersKanban')?.addEventListener('change',e=>{
+  const sel=e.target.closest('[data-board-order]');if(sel)saveBoardStatus(Number(sel.dataset.boardOrder),sel.value);
+});
+$$('[data-orders-view]').forEach(btn=>btn.addEventListener('click',()=>{
+  const mode=btn.dataset.ordersView;
+  $$('[data-orders-view]').forEach(b=>b.classList.toggle('active',b===btn));
+  $('#ordersKanban')?.classList.toggle('hidden',mode!=='board');
+  $('#ordersListView')?.classList.toggle('hidden',mode!=='list');
+  if(mode==='board')loadOrders('all');
+}));
+
 
 /* ══════════ CUSTOMERS ══════════ */
 async function loadCustomers() {
