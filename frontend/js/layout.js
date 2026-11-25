@@ -5,7 +5,6 @@
 'use strict';
 
 const HEADER = `
-<div class="announce" aria-hidden="true"><div class="announce-track" id="announceTrack"></div></div>
 <header class="nav">
   <div class="container nav-inner">
     <a class="brand" href="/" aria-label="Chandrahasa — divine jewellery, home">
@@ -41,7 +40,7 @@ const HEADER = `
     </div>
   </div>
   <div class="mobile-menu">
-    <a href="/shop">Shop All</a><a href="/shop?category=rings">Rings</a><a href="/shop?category=necklaces">Necklaces</a><a href="/shop?category=earrings">Earrings</a><a href="/shop?category=pendants">Pendants</a><a href="/shop?category=bracelets">Bracelets</a><a href="/heritage">Heritage &amp; Artisans</a><a href="/account">My Account</a><a href="/contact">Contact</a>
+    <a href="/explore">Explore</a><a href="/shop">Shop All</a><a href="/shop?category=rings">Rings</a><a href="/shop?category=necklaces">Necklaces</a><a href="/shop?category=earrings">Earrings</a><a href="/shop?category=pendants">Pendants</a><a href="/shop?category=bracelets">Bracelets</a><a href="/heritage">Heritage &amp; Artisans</a><a href="/account">My Account</a><a href="/contact">Contact</a>
   </div>
 </header>`;
 
@@ -121,9 +120,4 @@ const FOOTER = `
   if (headerMount) headerMount.outerHTML = HEADER;
   if (footerMount) footerMount.outerHTML = FOOTER;
   const experience = document.createElement('script'); experience.src = '/js/experience.js'; experience.defer = true; document.head.appendChild(experience);
-  const track = document.getElementById('announceTrack');
-  if (track) {
-    const unit = '<span>✦ Free shipping above <b>₹999</b></span><span>Product details before you choose</span><span>See current offers at checkout</span>';
-    track.innerHTML = unit + unit; // duplicated for a seamless -50% loop
-  }
 })();
