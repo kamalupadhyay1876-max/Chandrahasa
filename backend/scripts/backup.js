@@ -44,7 +44,7 @@ async function createBackup() {
   for (const name of fs.readdirSync(BACKUP_DIR).filter(n => /^chandrahasa-.*\.sqlite$/.test(n))) {
     const file = path.join(BACKUP_DIR, name);
     if (file !== target && Date.now() - fs.statSync(file).mtimeMs > KEEP * 86400000) {
-      const mediaPath = file.replace(/\\.sqlite$/, '.media.tar.gz');
+      const mediaPath = file.replace(/\.sqlite$/, '.media.tar.gz');
       fs.rmSync(file, { force: true }); fs.rmSync(`${file}.sha256`, { force: true });
       fs.rmSync(mediaPath, { force: true }); fs.rmSync(`${mediaPath}.sha256`, { force: true });
     }
