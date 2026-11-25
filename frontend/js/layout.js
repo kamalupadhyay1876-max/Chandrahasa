@@ -56,7 +56,7 @@ const FOOTER = `
       </div>
       <div>
         <h4>Shop</h4>
-        <a href="/shop?category=rings">Rings</a><a href="/shop?category=necklaces">Necklaces</a><a href="/shop?category=earrings">Earrings</a><a href="/shop?category=pendants">Pendants</a><a href="/shop?category=bracelets">Bracelets</a><a href="/shop?category=gift-sets">Gift Sets</a><a href="/shop?sort=popular">Best Sellers</a>
+        <a href="/explore">Explore the collection</a><a href="/shop?category=rings">Rings</a><a href="/shop?category=necklaces">Necklaces</a><a href="/shop?category=earrings">Earrings</a><a href="/shop?category=pendants">Pendants</a><a href="/shop?category=bracelets">Bracelets</a><a href="/shop?category=gift-sets">Gift Sets</a><a href="/shop?sort=popular">Best Sellers</a>
       </div>
       <div>
         <h4>Support</h4>
