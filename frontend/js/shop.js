@@ -96,7 +96,7 @@ const priceChanged = () => {
 minInput.addEventListener('input', priceChanged);
 maxInput.addEventListener('input', priceChanged);
 
-CH.$('input[name="purity"]').forEach(input => {
+document.querySelectorAll('input[name="purity"]').forEach(input => {
   input.checked = input.value === state.purity;
   input.addEventListener('change', () => { state.purity = input.value; syncUrl(); fetchProducts(true); });
 });
