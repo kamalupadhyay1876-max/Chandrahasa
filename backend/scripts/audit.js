@@ -124,3 +124,5 @@ check('Public category API normalizes legacy slugs and merges only populated cat
 check('Product category filters resolve canonical storefront slugs to stored category slugs',()=>{const s=read(path.join(root,'server.js'));if(!s.includes('const normalized = storefrontCategory(category, category).slug')||!s.includes('category_slug IN'))throw Error('category filter alias resolution missing');});
 
 check('Purity radio filters are URL-driven and applied by the product API',()=>{const ui=read(path.join(front,'js','shop.js')),h=read(path.join(front,'shop.html')),api=read(path.join(root,'server.js'));if(!ui.includes('state.purity')||!ui.includes("q.set('purity', state.purity)")||!h.includes('name=\"purity\" value=\"925\"')||!api.includes('if (purity)'))throw Error('purity filter is not connected end to end');});
+
+check('Category normalization does not classify unrelated words containing ring as jewellery categories',()=>{const s=read(path.join(root,'server.js'));if(!s.includes("ring(?:demo|my|[0-9])")||!s.includes("rings?(?:$|[^a-z])"))throw Error('category matcher is too broad');});

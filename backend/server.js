@@ -162,7 +162,7 @@ const clean = (s, max = 300) => String(s ?? '').replace(/[<>"'`]/g, '').trim().s
 // owner-managed category or product rows in the database.
 function storefrontCategory(name, slug) {
   const key = `${String(name || '')} ${String(slug || '')}`.toLowerCase();
-  if (/ring/.test(key)) return { name: 'Rings', slug: 'rings' };
+  if (/(?:^|[^a-z])rings?(?:$|[^a-z])|ring(?:demo|my|[0-9])/.test(key)) return { name: 'Rings', slug: 'rings' };
   if (/necklace/.test(key)) return { name: 'Necklaces', slug: 'necklaces' };
   if (/earring/.test(key)) return { name: 'Earrings', slug: 'earrings' };
   if (/pendant/.test(key)) return { name: 'Pendants', slug: 'pendants' };
