@@ -29,6 +29,16 @@ async function createBackup() {
   } finally { verify.close(); }
   const digest = crypto.createHash('sha256').update(fs.readFileSync(target)).digest('hex');
   fs.writeFileSync(`${target}.sha256`, `${digest}  ${path.basename(target)}\n`, { mode: 0o600 });
+  const uploadDir = path.join(path.dirname(DATA_PATH), 'uploads');
+  let mediaArchive = null;
+  if (fs.existsSync(uploadDir) && fs.statSync(uploadDir).isDirectory()) {
+    const mediaPath = target.replace(/\.sqlite$/, '.media.tar.gz');
+    await execFileAsync('tar', ['-czf', mediaPath, '-C', uploadDir, '.']);
+    await execFileAsync('tar', ['-tzf', mediaPath]);
+    const mediaDigest = crypto.createHash('sha256').update(fs.readFileSync(mediaPath)).digest('hex');
+    fs.writeFileSync(`${mediaPath}.sha256`, `${mediaDigest}  ${path.basename(mediaPath)}\n`, { mode: 0o600 });
+    mediaArchive = { file: mediaPath, sha256: mediaDigest, bytes: fs.statSync(mediaPath).size };
+  }
   const stat = fs.statSync(target);
   // Keep at least the newest backup; prune only files older than retention.
   for (const name of fs.readdirSync(BACKUP_DIR).filter(n => /^chandrahasa-.*\.sqlite$/.test(n))) {
