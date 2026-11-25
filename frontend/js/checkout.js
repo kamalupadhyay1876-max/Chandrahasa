@@ -73,10 +73,48 @@ $('#couponForm').addEventListener('submit', (e) => { e.preventDefault(); applyCo
 $('#giftWrapChk').addEventListener('change', (e) => { state.giftWrap = e.target.checked; recalc(); });
 
 /* ── payment method toggle ── */
-$$('.pay-method').forEach(btn => btn.addEventListener('click', () => {
+$('.pay-method').forEach(btn => btn.addEventListener('click', () => {
   state.method = btn.dataset.method;
-  $$('.pay-method').forEach(b => { const on = b === btn; b.classList.toggle('active', on); b.setAttribute('aria-checked', String(on)); });
+  $('.pay-method').forEach(b => { const on = b === btn; b.classList.toggle('active', on); b.setAttribute('aria-checked', String(on)); });
 }));
+
+async function configureOnlinePayments() {
+  const button = $('[data-method="razorpay"]');
+  if (!button) return;
+  const note = button.querySelector('small');
+  button.disabled = true;
+  try {
+    const config = await CH.api('/api/payments/config');
+    if (!config.enabled) {
+      if (note) note.textContent = 'Gateway not configured · Cash on delivery available';
+      return;
+    }
+    if (!window.Razorpay) {
+      await new Promise((resolve, reject) => {
+        const existing = document.querySelector('script[data-razorpay-checkout]');
+        if (existing) {
+          existing.addEventListener('load', resolve, { once: true });
+          existing.addEventListener('error', reject, { once: true });
+          return;
+        }
+        const script = document.createElement('script');
+        script.src = 'https://checkout.razorpay.com/v1/checkout.js';
+        script.async = true;
+        script.dataset.razorpayCheckout = '1';
+        script.onload = resolve;
+        script.onerror = () => reject(new Error('Secure payment library could not load.'));
+        document.head.appendChild(script);
+      });
+    }
+    if (typeof window.Razorpay !== 'function') throw new Error('Secure payment library is unavailable.');
+    button.disabled = false;
+    if (note) note.textContent = 'UPI · Cards · Netbanking';
+  } catch {
+    button.disabled = true;
+    if (note) note.textContent = 'Online payment temporarily unavailable';
+  }
+}
+configureOnlinePayments();
 
 /* ── PIN code autofill (India Post) with graceful offline fallback ── */
 $('#coPincode').addEventListener('input', (e) => {

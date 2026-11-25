@@ -1671,7 +1671,7 @@ function serveStatic(req, res, pathname) {
     'Permissions-Policy': 'camera=(), microphone=(), geolocation=(), payment=()',
     'Cross-Origin-Opener-Policy': 'same-origin',
     'Cross-Origin-Resource-Policy': 'same-origin',
-    'Content-Security-Policy': "default-src 'self'; script-src 'self' 'sha256-oi5MSaRgEfPlFBt9K4o8e2MNsslue8qJ/IE8HZenmTg=' 'sha256-8IG0Znz4sd8En/E0BO12cufBTu2z9lPjLkiCNkp7Lxo=' 'sha256-qgxx3qGQNz/bnRQxwamPcG4tRLHcwx5PkqCbUwCofwI=' 'sha256-sjgnVCdBelfJNKRwZ3jO5ZoOe9wcKvLfHHCfk7ZR7Io='; style-src 'self' 'unsafe-inline'; img-src 'self' data: blob:; media-src 'self' blob:; font-src 'self'; connect-src 'self'; frame-ancestors 'none'; base-uri 'self'; form-action 'self'",
+    'Content-Security-Policy': "default-src 'self'; script-src 'self' https://checkout.razorpay.com 'sha256-oi5MSaRgEfPlFBt9K4o8e2MNsslue8qJ/IE8HZenmTg=' 'sha256-8IG0Znz4sd8En/E0BO12cufBTu2z9lPjLkiCNkp7Lxo=' 'sha256-qgxx3qGQNz/bnRQxwamPcG4tRLHcwx5PkqCbUwCofwI=' 'sha256-sjgnVCdBelfJNKRwZ3jO5ZoOe9wcKvLfHHCfk7ZR7Io='; style-src 'self' 'unsafe-inline'; img-src 'self' data: blob: https://*.razorpay.com; media-src 'self' blob:; font-src 'self'; connect-src 'self' https://api.razorpay.com https://checkout.razorpay.com https://lumberjack.razorpay.com; frame-src https://api.razorpay.com https://checkout.razorpay.com; frame-ancestors 'none'; base-uri 'self'; form-action 'self'",
   };
   const status = filePath.endsWith('404.html') && !pathname.endsWith('404.html') ? 404 : 200;
   res.writeHead(status, headers);
