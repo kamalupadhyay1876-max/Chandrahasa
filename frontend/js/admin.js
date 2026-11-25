@@ -316,6 +316,12 @@ const customizationGroups = [
   ['Operations & policies','ops.support_hours,ops.response_sla,ops.order_prefix,ops.invoice_prefix,ops.low_stock_email,ops.order_email,ops.return_window_days,ops.exchange_enabled,ops.return_enabled,ops.warranty_text,ops.care_instructions,ops.shipping_eta,ops.dispatch_eta,ops.privacy_contact,ops.legal_entity,ops.gst_number,ops.invoice_footer,ops.refund_policy,ops.cancellation_policy,ops.maintenance_message']
 ];
 const customFields = customizationGroups.flatMap(([group,keys]) => keys.split(',').map((key,i)=>({group,key:'customization.'+key,label:key.split('.').slice(1).join(' ').replace(/_/g,' ').replace(/\b\w/g,c=>c.toUpperCase()),type:key.startsWith('theme.')&&['primary','accent','background','surface','text','muted','border','success','warning','danger'].some(k=>key.endsWith('.'+k))?'color':key.endsWith('.enabled')||key.endsWith('.sticky')||key.endsWith('.transparent')||key.endsWith('.show_search')||key.endsWith('.show_account')||key.endsWith('.show_wishlist')||key.endsWith('.show_cart')||key.endsWith('.show_announcement')||key.endsWith('.show_categories')||key.endsWith('.show_bestsellers')||key.endsWith('.show_new_arrivals')||key.endsWith('.show_filters')||key.endsWith('.guest_enabled')||key.endsWith('.phone_required')||key.endsWith('.terms_required')||key.endsWith('.cod_enabled')||key.endsWith('.coupon_enabled')||key.endsWith('.drawer_enabled')||key.endsWith('.show_newsletter')||key.endsWith('.show_social')||key.endsWith('.show_payment_icons')||key.endsWith('.show_contact')||key.endsWith('.sitemap_enabled')||key.endsWith('.breadcrumbs_enabled')||key.endsWith('.popup_enabled')||key.endsWith('.referral_enabled')||key.endsWith('.loyalty_enabled')||key.endsWith('.gift_card_enabled')||key.endsWith('.return_enabled')||key.endsWith('.exchange_enabled')?'checkbox':'text'})));
+const customizationThemeDefaults = {
+  'customization.theme.primary':'#321720','customization.theme.accent':'#a77c45','customization.theme.background':'#f7f2eb',
+  'customization.theme.surface':'#fffdf9','customization.theme.text':'#42262e','customization.theme.muted':'#705860',
+  'customization.theme.border':'#ece6d9','customization.theme.success':'#1d6f4a','customization.theme.warning':'#a77c45',
+  'customization.theme.danger':'#a33b2a'
+};
 async function loadCustomizations(){
   const data=await CH.api('/api/admin/settings');
   const saved=data.settings||{};
@@ -323,7 +329,7 @@ async function loadCustomizations(){
   host.innerHTML=customizationGroups.map(([group])=>{
     const fields=customFields.filter(f=>f.group===group);
     return '<details class="admin-panel" open><summary style="font-weight:700;cursor:pointer">'+escapeAdminText(group)+' ('+fields.length+')</summary><div style="display:grid;grid-template-columns:repeat(auto-fit,minmax(210px,1fr));gap:10px;margin-top:14px">'+fields.map(f=>{
-      const value=saved[f.key]??'';
+      const value=saved[f.key]??customizationThemeDefaults[f.key]??'';
       const rendered=f.type==='checkbox'?'<input type="checkbox" data-custom-key="'+f.key+'" '+(value===true?'checked':'')+' style="width:20px;height:20px">':'<input type="'+f.type+'" data-custom-key="'+f.key+'" value="'+escapeAdminText(value)+'" maxlength="500" style="width:100%">';
       return '<label style="display:grid;gap:5px;font-size:12px;color:var(--soft-ink)">'+escapeAdminText(f.label)+rendered+'</label>';
     }).join('')+'</div></details>';
