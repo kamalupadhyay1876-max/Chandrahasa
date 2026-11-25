@@ -1306,7 +1306,7 @@ async function route(req, res, pathname, query) {
       if (db.prepare('SELECT 1 FROM products WHERE slug = ?').get(slug)) return json(res, 409, { error: 'Product URL slug already exists.' });
       const images = Array.isArray(b.images) ? b.images.map(x => clean(x, 1000)).filter(Boolean).slice(0, 20) : [];
       db.prepare(`INSERT INTO products (slug,name,category_slug,description,price,compare_price,images,huid,purity,weight,stock,rating,review_count,badge,artisan,artisan_story,is_active)
-        VALUES (?,?,?,?,?,?,?,?,?,?,?,0,0,?,?,?,?,?)`).run(
+        VALUES (?,?,?,?,?,?,?,?,?,?,?,0,0,?,?,?,?)`).run(
         slug, name, category, clean(b.description, 6000), price, toInt(b.compare_price) || null,
         JSON.stringify(images), huid, clean(b.purity, 80) || '', clean(b.weight, 40), Math.max(0,toInt(b.stock)),
         clean(b.badge, 30) || null, clean(b.artisan, 80), clean(b.artisan_story, 6000), b.is_active === false ? 0 : 1
