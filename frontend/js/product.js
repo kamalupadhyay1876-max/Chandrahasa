@@ -75,7 +75,7 @@ function purchasePayload() {
   const p = state.product;
   return {
     productId: p.id, qty: state.qty, size: state.size ? String(state.size) : '',
-    name: p.name, price: p.price, image: p.images && p.images[0] || '', huid: p.huid || '', stock: p.stock,
+    name: p.name, price: p.price, image: CH.safeImageUrl(p.images && p.images[0]) || CH.safeImageUrl($('#pdpPhoto')?.currentSrc || $('#pdpPhoto')?.getAttribute('src') || ''), huid: p.huid || '', stock: p.stock,
   };
 }
 $('#addToBagBtn').addEventListener('click', async () => {
