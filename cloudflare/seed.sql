@@ -21,4 +21,4 @@ INSERT OR IGNORE INTO products(slug,name,category_slug,description,price,compare
 INSERT OR IGNORE INTO coupons(code,type,value,min_order,usage_limit,used_count,active) VALUES('SILVER20','percentage',20,999,10000,0,1);
 INSERT OR IGNORE INTO coupons(code,type,value,min_order,usage_limit,used_count,active) VALUES('WELCOME10','percentage',10,499,5000,0,1);
 INSERT OR IGNORE INTO coupons(code,type,value,min_order,usage_limit,used_count,active) VALUES('HERITAGE500','fixed',500,2999,500,0,1);
-INSERT OR IGNORE INTO users(name,email,phone,password_hash,salt,role) VALUES('Chandrahasa Admin','admin@chandrahasa.com','', '96e93a8798fa55b1a94c5de4a69f555b9a5a9f9bff9866c35c15759152983d98','2335022524569a62371068710a50e6f3','admin');
+INSERT OR IGNORE INTO users(name,email,phone,password_hash,salt,role) VALUES('Chandrahasa Admin','admin@chandrahasa.com','', '1f1a5a38d8129b3693d9c5931ecddcbd875f9b6db75807d359c5f9f09cd67034','2335022524569a62371068710a50e6f3','admin');

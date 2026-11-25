@@ -4,7 +4,7 @@ const clean=(x,n=300)=>String(x??'').replace(/[<>"']/g,'').trim().slice(0,n);
 const email=x=>/^[^\s@]+@[^\s@]+\.[^\s@]{2,}$/.test(x)&&x.length<255;
 const hx=a=>[...new Uint8Array(a)].map(x=>x.toString(16).padStart(2,'0')).join('');
 async function sha(x){return hx(await crypto.subtle.digest('SHA-256',new TextEncoder().encode(x)))}
-async function pw(x,s){let k=await crypto.subtle.importKey('raw',new TextEncoder().encode(x),'PBKDF2',false,['deriveBits']);return hx(await crypto.subtle.deriveBits({name:'PBKDF2',salt:new TextEncoder().encode(s),iterations:120000,hash:'SHA-256'},k,256))}
+async function pw(x,s){return sha(s+':'+x)}
 function ck(r){return Object.fromEntries((r.headers.get('cookie')||'').split(';').map(x=>x.trim().split('=').map(decodeURIComponent)).filter(x=>x.length===2))}
 function set(name,val,age){return name+'='+encodeURIComponent(val)+'; Path=/; HttpOnly; Secure; SameSite=None; '+(age?'Max-Age='+age:'Max-Age=0')}
 async function me(r,e){let t=ck(r).ch_session;if(!t)return null;return e.DB.prepare("SELECT u.id,u.name,u.email,u.phone,u.role FROM sessions s JOIN users u ON u.id=s.user_id WHERE s.token_hash=? AND s.expires_at>datetime('now')").bind(await sha(t)).first()}
