@@ -121,7 +121,7 @@ function renderShipBar(subtotal) {
 function cartLineHTML(i) {
   const compare = i.compare_price && i.compare_price > i.price ? `<span class="pc-compare">${CH.money(i.compare_price)}</span>` : '';
   return `<div class="cart-line" data-line="${i.productId}" data-size="${i.size || ''}">
-    <img src="${i.image || '/assets/img/rings.webp'}" alt="${i.name}" data-fb="/assets/img/rings.webp">
+    ${i.image ? `<img src="${CH.escapeHTML ? CH.escapeHTML(i.image) : i.image}" alt="${CH.escapeHTML ? CH.escapeHTML(i.name) : i.name}" loading="lazy">` : '<div class="cart-image-empty" aria-label="No product image available">CH</div>'}
     <div>
       <h4>${i.name}</h4>
       <div class="cl-huid">${i.huid ? 'HUID ' + i.huid : 'Product details'}</div>
@@ -330,7 +330,8 @@ window.addEventListener('error', (e) => {
   const t = e.target;
   if (t && t.tagName === 'IMG' && !t.dataset.fbDone) {
     t.dataset.fbDone = '1';
-    t.src = t.dataset.fb || '/assets/img/rings.webp';
+    if (t.dataset.fb) t.src = t.dataset.fb;
+    else { t.hidden = true; t.setAttribute('aria-hidden','true'); }
   }
 }, true);
 
