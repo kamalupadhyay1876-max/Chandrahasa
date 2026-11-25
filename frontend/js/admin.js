@@ -62,6 +62,7 @@ const fmt = CH.money;
       main.innerHTML='<section class="admin-panel" role="alert" style="max-width:620px;margin:8vh auto;padding:32px"><span class="kicker">Private owner portal</span><h1 class="h-serif">Access denied</h1><p>This signed-in customer account does not have Admin permissions.</p><a class="btn btn-outline" href="/account">Customer account</a></section>';
       return;
     }
+    const adminSide = $('.admin-side'); if (adminSide) adminSide.hidden = false;
     $('#adminWho').textContent=me.user.name+' · '+me.user.email;
     $('#adminGreeting').textContent=me.user.name.split(' ')[0];
     boot();

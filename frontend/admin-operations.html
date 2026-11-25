@@ -4,7 +4,7 @@
 <link rel="stylesheet" href="/css/premium-upgrade.css">
 <link rel="stylesheet" href="/css/admin-upgrade.css"><style>
 body{background:#f2ede2}.ops{max-width:1200px;margin:32px auto;padding:20px}.ops-grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(280px,1fr));gap:16px}.ops-panel{background:white;border:1px solid #ddd3c1;border-radius:16px;padding:20px}.ops-panel input,.ops-panel textarea,.ops-panel select{width:100%;padding:10px;margin:6px 0;border:1px solid #ddd;border-radius:8px}.ops-panel button{margin-top:8px}.ops table{width:100%;font-size:13px}.ops td,.ops th{padding:8px;border-bottom:1px solid #eee;text-align:left}.ops-head{display:flex;align-items:center;justify-content:space-between;gap:12px;flex-wrap:wrap}
-</style></head><body><main class="ops">
+</style></head><body><main class="ops" hidden>
 <div class="ops-head"><div><small class="kicker">CHANDRAHASA · OPERATIONS</small><h1 class="h-serif">Business Control Room</h1></div><a class="btn btn-outline" href="/admin">← Admin Studio</a></div>
 <p>Category merchandising, storefront settings, inboxes, moderation and fulfilment tracking. All controls are connected to the live database.</p>
 <div class="ops-grid">
@@ -24,7 +24,7 @@ body{background:#f2ede2}.ops{max-width:1200px;margin:32px auto;padding:20px}.ops
 (async()=>{
 const api=async(path,opt={})=>CH.api(path,opt);
 const esc=s=>String(s??'').replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
-try{const me=await api('/api/auth/me');if(!me.user||me.user.role!=='admin'){location.href='/login?next=/admin-operations';return;}}catch{location.href='/login?next=/admin-operations';return;}
+try{const me=await api('/api/auth/me');if(!me.user||me.user.role!=='admin'){location.href='/login?next=/admin-operations';return;}document.querySelector('.ops').hidden=false;}catch{location.href='/login?next=/admin-operations';return;}
 async function load(){
 const [cats,contacts,news,reviews,audit,settings,orders,outbox]=await Promise.all([api('/api/admin/categories'),api('/api/admin/contacts'),api('/api/admin/newsletter'),api('/api/admin/reviews'),api('/api/admin/audit-log'),api('/api/admin/settings'),api('/api/admin/orders'),api('/api/admin/notifications/outbox')]);
 document.querySelector('#fulfillmentOrder').innerHTML='<option value=\"\">Select order…</option>'+orders.orders.map(o=>`<option value=\"${o.id}\">#${o.id} · ${esc(o.email)} · ₹${o.total} · ${esc(o.status)}</option>`).join('');
